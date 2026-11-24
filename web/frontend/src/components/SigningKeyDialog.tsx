@@ -4,6 +4,7 @@ import { api } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { Dialog } from "./Dialog";
 import { Icon } from "./Icon";
+import { PasswordInput } from "./PasswordInput";
 
 /** First-run step: create the user's own signing key (their "seal" for approving files). */
 export function SigningKeyDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -69,9 +70,9 @@ export function SigningKeyDialog({ open, onClose }: { open: boolean; onClose: ()
             nobody can quietly change a file <i>and</i> its record. It's locked with a passphrase that only you know.</p>
           <div className="split-form">
             <div className="field"><label htmlFor="kp">New key passphrase</label>
-              <input id="kp" type="password" autoComplete="new-password" value={passphrase} onChange={(e) => setPassphrase(e.target.value)} /></div>
+              <PasswordInput id="kp" autoComplete="new-password" value={passphrase} onChange={(e) => setPassphrase(e.target.value)} /></div>
             <div className="field"><label htmlFor="kp2">Repeat passphrase</label>
-              <input id="kp2" type="password" autoComplete="new-password" value={repeat} onChange={(e) => setRepeat(e.target.value)} /></div>
+              <PasswordInput id="kp2" autoComplete="new-password" value={repeat} onChange={(e) => setRepeat(e.target.value)} /></div>
           </div>
           {user?.is_cloud ? (
             <p className="subtle" style={{ marginTop: -4 }}>At least 12 characters. You'll also type it to confirm important
@@ -80,7 +81,7 @@ export function SigningKeyDialog({ open, onClose }: { open: boolean; onClose: ()
             <>
               <p className="subtle" style={{ marginTop: -4 }}>Use something different from your account password, at least 12 characters.</p>
               <div className="field"><label htmlFor="ap">Your account password (to confirm it's you)</label>
-                <input id="ap" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} /></div>
+                <PasswordInput id="ap" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} /></div>
             </>
           )}
           {user?.mfa_enabled && (

@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { api } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { Icon } from "../components/Icon";
+import { PasswordInput } from "../components/PasswordInput";
 
 /**
  * Last step of creating an account that signs in with e-mail codes: choose the passphrase.
@@ -74,7 +75,7 @@ export function SetPassphrasePage() {
           </p>
           <div className="field">
             <label htmlFor="pp">Passphrase</label>
-            <input id="pp" type="password" autoComplete="new-password" autoFocus value={passphrase}
+            <PasswordInput id="pp" autoComplete="new-password" autoFocus value={passphrase}
               onChange={(e) => setPassphrase(e.target.value)} />
             <div className="msg" style={{ display: "block", color: "var(--fv-text-subtle)" }}>
               At least 12 characters. {passphrase.length > 0 && passphrase.length < 12 ? `${12 - passphrase.length} more to go.` : ""}
@@ -82,7 +83,7 @@ export function SetPassphrasePage() {
           </div>
           <div className="field">
             <label htmlFor="pp2">Repeat passphrase</label>
-            <input id="pp2" type="password" autoComplete="new-password" value={repeat} onChange={(e) => setRepeat(e.target.value)} />
+            <PasswordInput id="pp2" autoComplete="new-password" value={repeat} onChange={(e) => setRepeat(e.target.value)} />
           </div>
           {error && <div className="form-error" role="alert">{error}</div>}
         </div>

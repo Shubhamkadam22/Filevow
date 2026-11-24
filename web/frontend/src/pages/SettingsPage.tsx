@@ -13,6 +13,7 @@ import { StepUpDialog, type StepUpValues } from "../components/StepUpDialog";
 import { useToast } from "../components/Toast";
 import { usePreferences, type Density, type Theme } from "../hooks/usePreferences";
 import { timeAgo } from "../lib/format";
+import { PasswordInput } from "../components/PasswordInput";
 
 type Pending =
   | { kind: "password"; newPassword: string }
@@ -339,8 +340,8 @@ function PasswordDialog({ open, onClose, onSubmit }: { open: boolean; onClose: (
     <Dialog open={open} onClose={onClose} title="Change password"
       footer={<><button className="btn primary" form="pw-form" type="submit">Continue</button><button className="btn" onClick={onClose}>Cancel</button></>}>
       <form id="pw-form" onSubmit={(e) => { e.preventDefault(); setTouched(true); if (!problem) { onSubmit(password); setPassword(""); setRepeat(""); } }}>
-        <div className="field"><label htmlFor="np">New password</label><input id="np" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} /></div>
-        <div className={`field ${touched && problem ? "err" : ""}`}><label htmlFor="np2">Repeat new password</label><input id="np2" type="password" autoComplete="new-password" value={repeat} onChange={(e) => setRepeat(e.target.value)} /><div className="msg">{problem}</div></div>
+        <div className="field"><label htmlFor="np">New password</label><PasswordInput id="np" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} /></div>
+        <div className={`field ${touched && problem ? "err" : ""}`}><label htmlFor="np2">Repeat new password</label><PasswordInput id="np2" autoComplete="new-password" value={repeat} onChange={(e) => setRepeat(e.target.value)} /><div className="msg">{problem}</div></div>
       </form>
     </Dialog>
   );
@@ -359,7 +360,7 @@ function UserDialog({ open, onClose, onSubmit }: { open: boolean; onClose: () =>
         <div className="field"><label htmlFor="un">Username</label><input id="un" value={username} onChange={(e) => setUsername(e.target.value)} /></div>
         <div className={`field ${touched && invalid ? "err" : ""}`}>
           <label htmlFor="up">Initial password</label>
-          <input id="up" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <PasswordInput id="up" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
           <div className="msg">Usernames need 3+ characters and passwords 12+.</div>
         </div>
         <div className="field">
@@ -415,7 +416,7 @@ function ChannelDialog({ open, onClose, onSubmit }: { open: boolean; onClose: ()
             <div className="field"><label htmlFor="sr">Recipients (comma separated)</label><input id="sr" value={recipients} onChange={(e) => setRecipients(e.target.value)} /></div>
             <div className="split-form">
               <div className="field"><label htmlFor="su">SMTP user (optional)</label><input id="su" value={smtpUser} onChange={(e) => setSmtpUser(e.target.value)} /></div>
-              <div className="field"><label htmlFor="sp">SMTP password</label><input id="sp" type="password" autoComplete="off" value={smtpPassword} onChange={(e) => setSmtpPassword(e.target.value)} /></div>
+              <div className="field"><label htmlFor="sp">SMTP password</label><PasswordInput id="sp" autoComplete="off" value={smtpPassword} onChange={(e) => setSmtpPassword(e.target.value)} /></div>
             </div>
           </>
         ) : type !== "desktop" ? (

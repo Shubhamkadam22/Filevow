@@ -2,6 +2,7 @@ import { useState, type FormEvent, type ReactNode } from "react";
 import { useWorkspace } from "../api/queries";
 import { useAuth } from "../auth/AuthContext";
 import { Dialog } from "./Dialog";
+import { PasswordInput } from "./PasswordInput";
 
 export interface StepUpValues {
   password: string;
@@ -101,15 +102,15 @@ export function StepUpDialog(props: StepUpDialogProps) {
         {props.summary && <div className="summary">{props.summary}</div>}
         {askSecret && (cloud
           ? field("password", "Your passphrase", "The passphrase you set when you created your account.",
-            <input id="su-password" type="password" autoComplete="off" value={values.password} onChange={set("password")} />)
+            <PasswordInput id="su-password" autoComplete="off" value={values.password} onChange={set("password")} />)
           : field("password", "Password", "Enter your password.",
-            <input id="su-password" type="password" autoComplete="current-password" value={values.password} onChange={set("password")} />))}
+            <PasswordInput id="su-password" autoComplete="current-password" value={values.password} onChange={set("password")} />))}
         {needsTotp &&
           field("totpCode", "Authenticator code", "Enter the 6-digit code from your authenticator app.",
             <input id="su-totpCode" inputMode="numeric" autoComplete="one-time-code" placeholder="6-digit code" value={values.totpCode} onChange={set("totpCode")} />)}
         {needsKey &&
           field("keyPassphrase", "Signing-key passphrase", "The passphrase unlocks your baseline signing key.",
-            <input id="su-keyPassphrase" type="password" autoComplete="off" value={values.keyPassphrase} onChange={set("keyPassphrase")} />)}
+            <PasswordInput id="su-keyPassphrase" autoComplete="off" value={values.keyPassphrase} onChange={set("keyPassphrase")} />)}
         {needsReason &&
           field("reason", "Reason (saved in the audit log)", "A reason is required for every decision.",
             <input id="su-reason" placeholder="e.g. I updated this file myself" value={values.reason} onChange={set("reason")} />)}

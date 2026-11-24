@@ -7,6 +7,7 @@ import { Dialog } from "./Dialog";
 import { FolderBrowser } from "./FolderBrowser";
 import { Icon } from "./Icon";
 import { useToast } from "./Toast";
+import { PasswordInput } from "./PasswordInput";
 
 interface Props {
   open: boolean;
@@ -104,13 +105,13 @@ export function AddFolderFlow({ open, hasSigningKey, onClose, onNeedKey }: Props
           <p style={{ margin: "4px 0 8px", fontWeight: 600 }}>Confirm it's you</p>
           {user?.is_cloud ? (
             <div className="field"><label htmlFor="add-kp">Your passphrase</label>
-              <input id="add-kp" type="password" autoComplete="off" value={passphrase} onChange={(e) => setPassphrase(e.target.value)} /></div>
+              <PasswordInput id="add-kp" autoComplete="off" value={passphrase} onChange={(e) => setPassphrase(e.target.value)} /></div>
           ) : (
             <div className="split-form">
               <div className="field"><label htmlFor="add-pw">Account password</label>
-                <input id="add-pw" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} /></div>
+                <PasswordInput id="add-pw" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} /></div>
               <div className="field"><label htmlFor="add-kp">Signing-key passphrase</label>
-                <input id="add-kp" type="password" autoComplete="off" value={passphrase} onChange={(e) => setPassphrase(e.target.value)} /></div>
+                <PasswordInput id="add-kp" autoComplete="off" value={passphrase} onChange={(e) => setPassphrase(e.target.value)} /></div>
             </div>
           )}
           {user?.mfa_enabled && (

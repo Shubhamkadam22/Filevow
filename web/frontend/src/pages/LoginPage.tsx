@@ -3,6 +3,7 @@ import { ApiError, api } from "../api/client";
 import type { AuthOptions } from "../api/types";
 import { useAuth } from "../auth/AuthContext";
 import { CloudSignIn } from "./CloudSignIn";
+import { PasswordInput } from "../components/PasswordInput";
 
 type Mode = "signin" | "signup";
 
@@ -82,13 +83,13 @@ export function LoginPage() {
           </div>
           <div className="field">
             <label htmlFor="password">Password</label>
-            <input id="password" type="password" autoComplete={signup ? "new-password" : "current-password"}
+            <PasswordInput id="password" autoComplete={signup ? "new-password" : "current-password"}
               value={password} onChange={(e) => setPassword(e.target.value)} disabled={needsCode} />
           </div>
           {signup && (
             <div className="field">
               <label htmlFor="repeat">Repeat password</label>
-              <input id="repeat" type="password" autoComplete="new-password" value={repeat} onChange={(e) => setRepeat(e.target.value)} />
+              <PasswordInput id="repeat" autoComplete="new-password" value={repeat} onChange={(e) => setRepeat(e.target.value)} />
             </div>
           )}
           {needsCode && (
