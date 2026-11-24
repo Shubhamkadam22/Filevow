@@ -32,6 +32,5 @@ Thumbs.db
 # Local development environment
 web/backend/.dev-home/
 
-# Release binaries are published with the website, not committed
-web/website/downloads/*.exe
-web/website/downloads/*.sha256
+# Release binaries go to GitHub Releases, never into git
+*.exe

@@ -12,6 +12,53 @@ open FileVow → create an account → add the folders and files to protect.
 
 ---
 
+## Go live: first release in 6 steps
+
+Everything below is done once. Afterwards a new version is just step 4 again.
+
+**1. Create the GitHub repository.** On github.com: **New repository**, name `filevow`,
+public or private, and *don't* add a README or licence (the project has them). Then
+push this project:
+
+```powershell
+git remote add origin https://github.com/<your-username>/filevow.git
+git push -u origin main
+```
+
+The first push opens a GitHub sign-in window (Git Credential Manager).
+
+**2. Point the website at your repository.** In `web/website/vercel.json` replace
+`YOUR-GITHUB-USERNAME/filevow` (three places) with `<your-username>/filevow`, commit and
+push. Check the contact address in `web/website/privacy.html` while you're there.
+
+**3. Check CI is green.** The **Actions** tab runs `CI` on every push: backend lint, types
+and tests on Windows; dashboard type-check, lint, tests and build.
+
+**4. Release the installer.** Make sure the version in `web/backend/pyproject.toml`
+matches the tag, then:
+
+```powershell
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+The `Release` workflow builds `FileVow.exe` and the Inno Setup installer on a GitHub
+Windows machine (about 10 minutes) and publishes a release with `FileVow-Setup.exe`,
+`FileVow-Setup-0.1.0.exe` and their `.sha256` files. The website's Download button
+always points at the newest release.
+
+**5. Deploy the website on Vercel.** On vercel.com: **Add New → Project →** import the
+`filevow` repository → **Root Directory** `web/website` → Framework Preset **Other**, no
+build command → **Deploy**. You get a `*.vercel.app` address; add your own domain under
+**Settings → Domains** if you have one.
+
+**6. Test the live site as a new user would.** Open the Vercel address, click
+**Download**, run the installer, create an account, protect a folder, change a file and
+restore it. Windows SmartScreen will warn about an unsigned installer until you sign
+it (see *Code signing*).
+
+---
+
 ## 1. Build the desktop app
 
 Requirements on the build machine: Windows 10/11 x64, Python 3.11+ (3.13 tested),
@@ -30,8 +77,11 @@ The script:
 3. draws the app icon and bundles `FileVow.exe` with PyInstaller
    (`build/dist/FileVow/`), then runs a smoke test;
 4. builds `web/packaging/windows/dist/FileVow-Setup-<version>.exe` with Inno Setup;
-5. writes `FileVow-Setup-<version>.exe.sha256` and copies both files to
-   `web/website/downloads/`.
+5. writes `.sha256` checksums and a versionless copy `FileVow-Setup.exe`, which the
+   website's "latest" download link uses.
+
+You normally don't run this yourself: the `Release` workflow runs it on GitHub for every
+version tag. Run it locally to test packaging changes.
 
 Options: `-SkipDashboard` (reuse an existing `dist`), `-SkipInstaller` (stop after
 PyInstaller; the app folder can be zipped and run as is).
@@ -75,10 +125,11 @@ Sign `FileVow.exe` before Inno Setup packs it (or configure `SignTool=` in
 - **Website: Vercel.** Import the GitHub repository in Vercel, set the Root Directory to
   `web/website` (framework *Other*, no build command). `vercel.json` sets a strict CSP,
   HSTS and no framing. Every push to `main` redeploys.
-- **Installer: GitHub Releases.** Create a release tagged `v<version>` and attach
-  `FileVow-Setup-<version>.exe` and `.sha256`. GitHub shows the download count for each
-  file (also via `gh release view` or the REST API), so no database is needed to count
-  downloads.
+- **Installer: GitHub Releases.** Pushing a tag `v<version>` runs
+  `.github/workflows/release.yml`, which builds and publishes the installer. Vercel
+  redirects `/downloads/FileVow-Setup.exe` to the newest release. GitHub shows the
+  download count for each file (also via the REST API), so no database is needed to
+  count downloads.
 - **Accounts stay on each PC.** FileVow has no central user database: each installation
   keeps its own accounts (Argon2id password hashes, two-step secrets, audit log) in its
   local SQLite file. The website collects nothing.
@@ -86,13 +137,13 @@ Sign `FileVow.exe` before Inno Setup packs it (or configure `SignTool=` in
 Release checklist:
 
 - [ ] Version bumped in `web/backend/pyproject.toml`, `src/filevow/__init__.py`,
-      `web/packaging/windows/version_info.txt` and `web/website/download.html`.
+      `web/packaging/windows/version_info.txt` and `installer.iss`.
 - [ ] All checks pass (section 4).
-- [ ] Installer built, signed, checksum regenerated, both attached to the GitHub Release.
+- [ ] Tag pushed; the Release workflow succeeded and the release has the installer and checksums.
 - [ ] Installer tested on a clean Windows user account: install, sign up, protect a
       folder, change a file, restore it, reboot (background start), uninstall.
 - [ ] Privacy policy still matches what the app stores; contact address correct.
-- [ ] `download.html` points at the release files; Vercel deployment checked.
+- [ ] Download button on the live site downloads the new version.
 
 ## 3. Server mode (optional)
 

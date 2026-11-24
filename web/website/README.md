@@ -11,8 +11,7 @@ Privacy policy and Download. Plain HTML and CSS with one small script, no build 
 | `privacy.html` | Privacy policy (keep it in step with what the app stores) |
 | `download.html` | Installer, checksum, requirements, install and first steps |
 | `assets/` | Stylesheet, script, logo and favicon (same palette as the app) |
-| `downloads/` | `FileVow-Setup-<version>.exe` and `.sha256`, copied here by the build script |
-| `vercel.json` | Vercel settings: security headers, clean URLs |
+| `vercel.json` | Vercel settings: security headers, clean URLs, `/downloads/*` and `/releases` redirects to GitHub Releases |
 | `_headers` | The same headers for Netlify / Cloudflare Pages |
 
 ## Preview locally
@@ -35,10 +34,9 @@ every download for free).
 Other static hosts work too: `_headers` holds the same headers for Netlify and
 Cloudflare Pages.
 
-Before publishing a release:
+Releases are built by GitHub Actions (`.github/workflows/release.yml`): push a tag such
+as `v0.1.0` and the installer appears on the Releases page. The download button always
+points at the latest release, so the site doesn't need changing for new versions.
 
-1. Run `web\packaging\windows\build.ps1`, then create a GitHub Release (tag `v<version>`)
-   and attach `FileVow-Setup-<version>.exe` and its `.sha256`.
-2. Point the download button and checksum in `download.html` at the release files and
-   update the version if it changed.
-3. Check the contact address in `privacy.html` is the one you want people to use.
+Before going live, replace `YOUR-GITHUB-USERNAME/filevow` in `vercel.json` with your
+repository, and check the contact address in `privacy.html`.

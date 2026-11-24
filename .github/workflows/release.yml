@@ -1,0 +1,79 @@
+# Builds the Windows installer and publishes it as a GitHub Release.
+# Trigger: push a tag like v0.1.0 (it must match the version in web/backend/pyproject.toml),
+# or run it by hand from the Actions tab to get the installer as a build artifact only.
+name: Release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write # create the release and upload the installer
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  windows-installer:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: web/frontend/package-lock.json
+
+      - name: Check the tag matches the app version
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        run: |
+          $version = (Select-String -Path web/backend/pyproject.toml -Pattern '^version\s*=\s*"(.+)"').Matches[0].Groups[1].Value
+          if ("v$version" -ne "${{ github.ref_name }}") {
+            throw "Tag ${{ github.ref_name }} does not match pyproject.toml version $version"
+          }
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --yes --no-progress
+
+      - name: Build app and installer
+        shell: pwsh
+        run: ./web/packaging/windows/build.ps1
+
+      - name: Check the installer was built
+        shell: pwsh
+        run: |
+          $files = Get-ChildItem web/packaging/windows/dist -Include *.exe, *.sha256 -Recurse
+          if (-not ($files | Where-Object Name -eq "FileVow-Setup.exe")) { throw "No installer was produced" }
+          $files | Format-Table Name, Length
+          Get-Content web/packaging/windows/dist/FileVow-Setup.exe.sha256
+
+      - name: Keep the installer as a build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FileVow-installer
+          path: |
+            web/packaging/windows/dist/*.exe
+            web/packaging/windows/dist/*.sha256
+          retention-days: 30
+
+      - name: Publish the GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $dist = "web/packaging/windows/dist"
+          gh release create "${{ github.ref_name }}" `
+            (Get-ChildItem $dist -Include *.exe, *.sha256 -Recurse).FullName `
+            --title "FileVow ${{ github.ref_name }}" `
+            --generate-notes

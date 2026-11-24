@@ -6,7 +6,3 @@
   Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
   X-Frame-Options: DENY
-
-/downloads/*
-  Content-Disposition: attachment
-  Cache-Control: public, max-age=300

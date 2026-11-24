@@ -7,7 +7,7 @@
   2. Creates a clean build environment and installs the backend with PyInstaller
   3. Bundles FileVow.exe with PyInstaller (web/packaging/windows/build/dist/FileVow)
   4. Builds FileVow-Setup-<version>.exe with Inno Setup 6 when it is installed
-  5. Writes the SHA-256 checksum and copies both to web/website/downloads
+  5. Writes SHA-256 checksums and a versionless FileVow-Setup.exe for "latest" download links
 
 .EXAMPLE
   powershell -ExecutionPolicy Bypass -File web\packaging\windows\build.ps1
@@ -88,11 +88,13 @@ $setup = Join-Path $dist "FileVow-Setup-$version.exe"
 $hash = (Get-FileHash $setup -Algorithm SHA256).Hash.ToLower()
 "$hash  FileVow-Setup-$version.exe" | Set-Content -Encoding ascii "$setup.sha256"
 
-$downloads = Join-Path $web "website\downloads"
-New-Item -ItemType Directory -Force $downloads | Out-Null
-Copy-Item $setup, "$setup.sha256" $downloads -Force
+# A copy without the version gives the website a permanent "latest" link:
+# https://github.com/<owner>/<repo>/releases/latest/download/FileVow-Setup.exe
+$latest = Join-Path $dist "FileVow-Setup.exe"
+Copy-Item $setup $latest -Force
+"$hash  FileVow-Setup.exe" | Set-Content -Encoding ascii "$latest.sha256"
 
 Step "Done"
 Write-Host "Installer: $setup"
 Write-Host "SHA-256:   $hash"
-Write-Host "Copied to: $downloads (publish this folder with the website)"
+Write-Host "Attach everything in $dist to a GitHub Release (the release workflow does this for you)."

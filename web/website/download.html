@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Download · FileVow</title>
-  <meta name="description" content="Download FileVow 0.1.0 for Windows 10 and 11.">
+  <meta name="description" content="Download the FileVow installer for Windows 10 and 11.">
   <meta name="theme-color" content="#0F2A44">
   <meta property="og:title" content="Download · FileVow">
-  <meta property="og:description" content="Download FileVow 0.1.0 for Windows 10 and 11.">
+  <meta property="og:description" content="Download the FileVow installer for Windows 10 and 11.">
   <meta property="og:type" content="website">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/site.css">
@@ -37,12 +37,11 @@
 
       <div class="card download-card">
         <div>
-          <h3 class="tight">FileVow 0.1.0 for Windows</h3>
+          <h3 class="tight">FileVow for Windows</h3>
           <p class="muted flush">64-bit installer · Windows 10 and 11</p>
-          <p class="muted label">SHA-256 of the installer:</p>
-          <p class="checksum" data-checksum="downloads/FileVow-Setup-0.1.0.exe.sha256">Published together with the installer.</p>
+          <p class="muted label">Always the latest version. <a href="downloads/FileVow-Setup.exe.sha256">SHA-256 checksum</a> · <a href="releases">Release notes and older versions</a></p>
         </div>
-        <a class="btn primary" href="downloads/FileVow-Setup-0.1.0.exe" download><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.5 10.5 4.5v7H3ZM12 4.3 21 3v8.5h-9ZM3 12.5h7.5v7L3 18.5ZM12 12.5h9V21l-9-1.3Z" fill="currentColor" stroke="none"/></svg>Download installer</a>
+        <a class="btn primary" href="downloads/FileVow-Setup.exe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.5 10.5 4.5v7H3ZM12 4.3 21 3v8.5h-9ZM3 12.5h7.5v7L3 18.5ZM12 12.5h9V21l-9-1.3Z" fill="currentColor" stroke="none"/></svg>Download installer</a>
       </div>
 
       <h2>System requirements</h2>
@@ -56,7 +55,7 @@
 
       <h2>Install</h2>
       <ol>
-        <li>Run <code>FileVow-Setup-0.1.0.exe</code>. If Windows SmartScreen says it doesn't recognise the app yet, choose <i>More info</i> and check the publisher before choosing <i>Run anyway</i>.</li>
+        <li>Run <code>FileVow-Setup.exe</code> from your Downloads folder. If Windows SmartScreen says it doesn't recognise the app yet, choose <i>More info</i> and check the publisher before choosing <i>Run anyway</i>.</li>
         <li>Choose whether FileVow should start with Windows (recommended, so monitoring never stops).</li>
         <li>Open FileVow from the Start menu. It opens in its own window.</li>
       </ol>
@@ -72,8 +71,8 @@
       <p>The <i>Help</i> page inside the app explains every feature.</p>
 
       <h2>Check your download</h2>
-      <p>To make sure the installer wasn't altered on its way to you, compare its fingerprint with the one shown above. In PowerShell:</p>
-      <pre class="cmd">Get-FileHash .\FileVow-Setup-0.1.0.exe -Algorithm SHA256</pre>
+      <p>To make sure the installer wasn't altered on its way to you, compare its fingerprint with the one in the <a href="downloads/FileVow-Setup.exe.sha256">checksum file</a>. In PowerShell:</p>
+      <pre class="cmd">Get-FileHash $HOME\Downloads\FileVow-Setup.exe -Algorithm SHA256</pre>
 
       <h2>Uninstall</h2>
       <p>Use <i>Settings → Apps → Installed apps → FileVow → Uninstall</i>. Your protected files are never touched. FileVow's own data (records and encrypted backups) stays in <code>%LOCALAPPDATA%\FileVow</code> until you delete that folder.</p>
