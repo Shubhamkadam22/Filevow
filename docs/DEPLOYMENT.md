@@ -21,15 +21,15 @@ public or private, and *don't* add a README or licence (the project has them). T
 push this project:
 
 ```powershell
-git remote add origin https://github.com/<your-username>/filevow.git
+git remote add origin https://github.com/shubhamkadam22/filevow.git
 git push -u origin main
 ```
 
 The first push opens a GitHub sign-in window (Git Credential Manager).
 
-**2. Point the website at your repository.** In `web/website/vercel.json` replace
-`YOUR-GITHUB-USERNAME/filevow` (three places) with `<your-username>/filevow`, commit and
-push. Check the contact address in `web/website/privacy.html` while you're there.
+**2. Check the website points at your repository.** `web/website/vercel.json` sends
+`/downloads/*` and `/releases` to `github.com/shubhamkadam22/filevow`; change it there if
+the repository moves. Check the contact address in `web/website/privacy.html` too.
 
 **3. Check CI is green.** The **Actions** tab runs `CI` on every push: backend lint, types
 and tests on Windows; dashboard type-check, lint, tests and build.

@@ -38,5 +38,5 @@ Releases are built by GitHub Actions (`.github/workflows/release.yml`): push a t
 as `v0.1.0` and the installer appears on the Releases page. The download button always
 points at the latest release, so the site doesn't need changing for new versions.
 
-Before going live, replace `YOUR-GITHUB-USERNAME/filevow` in `vercel.json` with your
-repository, and check the contact address in `privacy.html`.
+`vercel.json` points the download links at `github.com/shubhamkadam22/filevow`; update
+it if the repository moves. Check the contact address in `privacy.html` before going live.
