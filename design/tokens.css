@@ -1,0 +1,85 @@
+/* FileVow design tokens
+   Import once in the dashboard:  @import "design/tokens.css";
+   Every colour pair used for text meets WCAG AA (4.5:1) or better. */
+
+:root {
+  /* Brand */
+  --fv-navy-900: #0F2A44;   /* logo, top bar, headings            */
+  --fv-blue-700: #1D4E89;   /* primary buttons, active nav        */
+  --fv-blue-600: #2563A6;   /* hover for primary                  */
+  --fv-blue-500: #2F6FB3;   /* links, focus ring, logo middle ring */
+  --fv-blue-100: #E6EEF7;   /* selected rows, info backgrounds    */
+
+  /* Neutrals (slate) */
+  --fv-slate-900: #1E293B;  /* body text                          */
+  --fv-slate-600: #475569;  /* secondary text                     */
+  --fv-slate-500: #64748B;  /* captions, placeholders             */
+  --fv-slate-300: #CBD5E1;  /* borders                            */
+  --fv-slate-200: #E2E8F0;  /* dividers                           */
+  --fv-slate-100: #F1F5F9;  /* table header, subtle fills         */
+  --fv-slate-50:  #F8FAFC;  /* page background                    */
+  --fv-white:     #FFFFFF;  /* cards                              */
+
+  /* Status: always pair the colour with a text label or icon */
+  --fv-verified:      #1E7A4C;  --fv-verified-bg: #E7F4EC;   /* OK, signature valid  */
+  --fv-pending:       #8A5A0F;  --fv-pending-bg:  #FBF1DE;   /* pending review       */
+  --fv-critical:      #B42318;  --fv-critical-bg: #FDECEA;   /* tampering, critical  */
+  --fv-info:          #1D4E89;  --fv-info-bg:     #E6EEF7;   /* neutral information  */
+
+  /* Semantic roles (use these in components) */
+  --fv-bg:            var(--fv-slate-50);
+  --fv-surface:       var(--fv-white);
+  --fv-surface-muted: var(--fv-slate-100);
+  --fv-border:        var(--fv-slate-300);
+  --fv-divider:       var(--fv-slate-200);
+  --fv-text:          var(--fv-slate-900);
+  --fv-text-muted:    var(--fv-slate-600);
+  --fv-text-subtle:   var(--fv-slate-500);
+  --fv-heading:       var(--fv-navy-900);
+  --fv-primary:       var(--fv-blue-700);
+  --fv-primary-hover: var(--fv-blue-600);
+  --fv-on-primary:    #FFFFFF;
+  --fv-link:          var(--fv-blue-500);
+  --fv-focus:         var(--fv-blue-500);
+  --fv-topbar:        var(--fv-navy-900);
+
+  /* Typography */
+  --fv-font-sans: "Segoe UI Variable Text", "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, "Inter", sans-serif;  /* native Windows 11 font */
+  --fv-font-mono: "Cascadia Mono", "Cascadia Code", Consolas, "JetBrains Mono", monospace;   /* hashes, paths */
+  --fv-text-xs: 12px; --fv-text-sm: 13px; --fv-text-base: 14px;
+  --fv-text-lg: 16px; --fv-text-xl: 20px; --fv-text-2xl: 24px;
+
+  /* Shape and spacing */
+  --fv-radius-sm: 4px; --fv-radius: 6px; --fv-radius-lg: 10px;
+  --fv-space-1: 4px; --fv-space-2: 8px; --fv-space-3: 12px;
+  --fv-space-4: 16px; --fv-space-6: 24px; --fv-space-8: 32px;
+  --fv-shadow: 0 1px 2px rgba(15, 42, 68, 0.06), 0 1px 3px rgba(15, 42, 68, 0.08);
+}
+
+/* Dark theme: follows the OS unless the user picked light */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --fv-bg: #0B1623;  --fv-surface: #13233A;  --fv-surface-muted: #1A2D47;
+    --fv-border: #2A3F5C;  --fv-divider: #1F334D;
+    --fv-text: #E6EDF5;  --fv-text-muted: #9FB0C3;  --fv-text-subtle: #8295AB;
+    --fv-heading: #F1F5F9;
+    --fv-primary: #2E6DB4;  --fv-primary-hover: #2A63A3;  --fv-on-primary: #FFFFFF;
+    --fv-link: #6EA8E0;  --fv-focus: #6EA8E0;  --fv-topbar: #0F2A44;
+    --fv-verified: #4CC38A; --fv-verified-bg: #12322A;
+    --fv-pending:  #E5A93B; --fv-pending-bg:  #3A2C12;
+    --fv-critical: #F27066; --fv-critical-bg: #3D1A1A;
+    --fv-info:     #6EA8E0; --fv-info-bg:     #16314F;
+  }
+}
+:root[data-theme="dark"] {
+  --fv-bg: #0B1623;  --fv-surface: #13233A;  --fv-surface-muted: #1A2D47;
+  --fv-border: #2A3F5C;  --fv-divider: #1F334D;
+  --fv-text: #E6EDF5;  --fv-text-muted: #9FB0C3;  --fv-text-subtle: #8295AB;
+  --fv-heading: #F1F5F9;
+  --fv-primary: #2E6DB4;  --fv-primary-hover: #2A63A3;  --fv-on-primary: #FFFFFF;
+  --fv-link: #6EA8E0;  --fv-focus: #6EA8E0;  --fv-topbar: #0F2A44;
+  --fv-verified: #4CC38A; --fv-verified-bg: #12322A;
+  --fv-pending:  #E5A93B; --fv-pending-bg:  #3A2C12;
+  --fv-critical: #F27066; --fv-critical-bg: #3D1A1A;
+  --fv-info:     #6EA8E0; --fv-info-bg:     #16314F;
+}

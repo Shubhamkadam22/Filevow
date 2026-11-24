@@ -1,0 +1,129 @@
+# Deploying FileVow
+
+FileVow has two deliverables:
+
+| Deliverable | What it is | Where it runs |
+|---|---|---|
+| **Website** (`web/website`) | Static pages: Home, Features, About, Privacy, Download | Any static host |
+| **Desktop app** (`FileVow-Setup-<version>.exe`) | Dashboard + monitoring agent in one local process | Each user's Windows PC |
+
+The user journey: visit the website → read about FileVow → **Download** → install →
+open FileVow → create an account → add the folders and files to protect.
+
+---
+
+## 1. Build the desktop app
+
+Requirements on the build machine: Windows 10/11 x64, Python 3.11+ (3.13 tested),
+Node.js 20+, and [Inno Setup 6](https://jrsoftware.org/isinfo.php) for the installer
+(`winget install JRSoftware.InnoSetup`).
+
+```powershell
+powershell -ExecutionPolicy Bypass -File web\packaging\windows\build.ps1
+```
+
+The script:
+
+1. builds the dashboard (`npm ci` + `npm run build` in `web/frontend`);
+2. creates a clean build environment in `web/packaging/windows/build/venv` and installs
+   the backend, PyInstaller and Pillow;
+3. draws the app icon and bundles `FileVow.exe` with PyInstaller
+   (`build/dist/FileVow/`), then runs a smoke test;
+4. builds `web/packaging/windows/dist/FileVow-Setup-<version>.exe` with Inno Setup;
+5. writes `FileVow-Setup-<version>.exe.sha256` and copies both files to
+   `web/website/downloads/`.
+
+Options: `-SkipDashboard` (reuse an existing `dist`), `-SkipInstaller` (stop after
+PyInstaller; the app folder can be zipped and run as is).
+
+### What the installer does
+
+- Installs per user to `%LOCALAPPDATA%\Programs\FileVow` (no administrator rights).
+- Adds a Start menu shortcut and, optionally, a desktop shortcut.
+- Optionally registers `FileVow.exe desktop --background` under
+  `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` so monitoring starts at sign-in.
+  Users can change this later with `FileVow.exe autostart on|off`.
+- Uninstall removes the program and the startup entry; data in
+  `%LOCALAPPDATA%\FileVow` stays until the user deletes it.
+
+### How the desktop app runs
+
+- `FileVow.exe` (no arguments) = `filevow desktop`: if FileVow is already running it
+  just opens a window; otherwise it starts the API, the dashboard and the agent on
+  `http://127.0.0.1:8443` and opens Microsoft Edge in app mode with a separate profile
+  (`%LOCALAPPDATA%\FileVow\window-profile`). Without Edge or Chrome it uses the default
+  browser.
+- The server only listens on the loopback interface. Logs: `%LOCALAPPDATA%\FileVow\logs\filevow.log`.
+- Database migrations run automatically at start-up, so updates are installed by simply
+  running the newer installer.
+
+### Code signing (recommended before public release)
+
+Unsigned installers trigger Windows SmartScreen warnings. Sign both `FileVow.exe` and the
+installer with an Authenticode certificate (OV or EV) before publishing:
+
+```powershell
+signtool sign /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 /a web\packaging\windows\build\dist\FileVow\FileVow.exe
+signtool sign /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 /a web\packaging\windows\dist\FileVow-Setup-0.1.0.exe
+```
+
+Sign `FileVow.exe` before Inno Setup packs it (or configure `SignTool=` in
+`installer.iss`), then recompute the checksum.
+
+## 2. Publish the website and the installer
+
+- **Website: Vercel.** Import the GitHub repository in Vercel, set the Root Directory to
+  `web/website` (framework *Other*, no build command). `vercel.json` sets a strict CSP,
+  HSTS and no framing. Every push to `main` redeploys.
+- **Installer: GitHub Releases.** Create a release tagged `v<version>` and attach
+  `FileVow-Setup-<version>.exe` and `.sha256`. GitHub shows the download count for each
+  file (also via `gh release view` or the REST API), so no database is needed to count
+  downloads.
+- **Accounts stay on each PC.** FileVow has no central user database: each installation
+  keeps its own accounts (Argon2id password hashes, two-step secrets, audit log) in its
+  local SQLite file. The website collects nothing.
+
+Release checklist:
+
+- [ ] Version bumped in `web/backend/pyproject.toml`, `src/filevow/__init__.py`,
+      `web/packaging/windows/version_info.txt` and `web/website/download.html`.
+- [ ] All checks pass (section 4).
+- [ ] Installer built, signed, checksum regenerated, both attached to the GitHub Release.
+- [ ] Installer tested on a clean Windows user account: install, sign up, protect a
+      folder, change a file, restore it, reboot (background start), uninstall.
+- [ ] Privacy policy still matches what the app stores; contact address correct.
+- [ ] `download.html` points at the release files; Vercel deployment checked.
+
+## 3. Server mode (optional)
+
+For teams that want one shared FileVow instance (for example to watch a web server's
+files), run the same backend as a service instead of the desktop app:
+
+```powershell
+cd web\backend
+python -m venv .venv; .venv\Scripts\python -m pip install .
+copy .env.example .env      # set FILEVOW_HOME, FILEVOW_API_HOST, etc.
+.venv\Scripts\filevow init
+.venv\Scripts\filevow serve --host 0.0.0.0 --port 8443 --certfile cert.pem --keyfile key.pem
+```
+
+- Always use HTTPS (`--certfile/--keyfile` or a reverse proxy such as IIS, nginx or
+  Caddy) and keep `FILEVOW_COOKIE_SECURE=true`.
+- Set `FILEVOW_ALLOW_REGISTRATION=false` once the accounts you need exist, and limit the
+  folder browser with `FILEVOW_BROWSE_ROOTS`.
+- Run it as a Windows service (for example with NSSM or `sc.exe` wrapping
+  `filevow serve`) under a dedicated account that can read the monitored folders.
+- PostgreSQL: `pip install ".[postgres]"` and set `FILEVOW_DATABASE_URL`.
+
+## 4. Quality checks
+
+```powershell
+cd web\backend
+.venv\Scripts\python -m pytest
+.venv\Scripts\python -m ruff check src tests
+.venv\Scripts\python -m mypy src
+.venv\Scripts\alembic check
+
+cd ..\frontend
+npx tsc -b; npx eslint .; npx vitest run; npx vite build
+```

@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en" data-theme="light" style="color-scheme: light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FileVow Brand Guide</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--fv-bg); color: var(--fv-text); font: 400 14px/1.6 var(--fv-font-sans); }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 24px 64px; }
+  header.top { background: var(--fv-topbar); color: #fff; }
+  header.top .wrap { display: flex; align-items: center; gap: 14px; padding-top: 18px; padding-bottom: 18px; }
+  header.top h1 { font-size: 18px; font-weight: 600; margin: 0; letter-spacing: .2px; }
+  header.top span { color: #9FB0C3; font-size: 13px; }
+  h2 { color: var(--fv-heading); font-size: 20px; font-weight: 600; margin: 44px 0 6px; }
+  h3 { color: var(--fv-heading); font-size: 15px; font-weight: 600; margin: 22px 0 8px; }
+  p.lead { color: var(--fv-text-muted); margin: 0 0 18px; max-width: 760px; }
+  .card { background: var(--fv-surface); border: 1px solid var(--fv-border); border-radius: var(--fv-radius-lg); box-shadow: var(--fv-shadow); padding: 20px; }
+  .grid { display: grid; gap: 16px; }
+  .g2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .g4 { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+  .hero { display: grid; grid-template-columns: 220px 1fr; gap: 28px; align-items: center; }
+  .layers { display: grid; gap: 10px; }
+  .layer { display: grid; grid-template-columns: 14px 1fr; gap: 12px; align-items: start; }
+  .dot { width: 14px; height: 14px; border-radius: 3px; margin-top: 4px; }
+  .tile { border-radius: var(--fv-radius-lg); height: 150px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--fv-border); }
+  .tile.light { background: #fff; } .tile.dark { background: #0B1623; border-color: #0B1623; } .tile.tint { background: #E6EEF7; }
+  .cap { font-size: 12px; color: var(--fv-text-subtle); margin-top: 8px; }
+  .sizes { display: flex; align-items: flex-end; gap: 28px; }
+  .sizes div { text-align: center; font-size: 12px; color: var(--fv-text-subtle); }
+  .sw { border-radius: var(--fv-radius-lg); overflow: hidden; border: 1px solid var(--fv-border); background: var(--fv-surface); }
+  .sw .chip { height: 84px; display: flex; align-items: flex-end; padding: 10px; font: 600 13px var(--fv-font-sans); }
+  .sw .meta { padding: 10px 12px 12px; font-size: 12.5px; }
+  .sw .meta b { display: block; font-weight: 600; color: var(--fv-heading); font-size: 13px; }
+  .mono { font-family: var(--fv-font-mono); font-size: 12px; }
+  .muted { color: var(--fv-text-muted); }
+  .ratio { display: inline-block; margin-top: 4px; font-size: 11.5px; color: var(--fv-verified); }
+  .badge { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 500; }
+  .b-ok { background: var(--fv-verified-bg); color: var(--fv-verified); }
+  .b-pend { background: var(--fv-pending-bg); color: var(--fv-pending); }
+  .b-crit { background: var(--fv-critical-bg); color: var(--fv-critical); }
+  .b-info { background: var(--fv-info-bg); color: var(--fv-info); }
+  .btn { font: 500 13.5px var(--fv-font-sans); border-radius: var(--fv-radius); padding: 8px 16px; border: 1px solid transparent; cursor: pointer; }
+  .btn-primary { background: var(--fv-primary); color: var(--fv-on-primary); }
+  .btn-primary:hover { background: var(--fv-primary-hover); }
+  .btn-secondary { background: var(--fv-surface); color: var(--fv-text); border-color: var(--fv-border); }
+  .btn-danger { background: var(--fv-surface); color: var(--fv-critical); border-color: var(--fv-critical); }
+  .btn:focus-visible { outline: 2px solid var(--fv-focus); outline-offset: 2px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; font-weight: 600; color: var(--fv-text-muted); background: var(--fv-surface-muted); padding: 9px 12px; border-bottom: 1px solid var(--fv-border); }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--fv-divider); vertical-align: middle; }
+  .app { border: 1px solid var(--fv-border); border-radius: var(--fv-radius-lg); overflow: hidden; background: var(--fv-bg); }
+  .app-bar { background: var(--fv-topbar); color: #fff; display: flex; align-items: center; gap: 10px; padding: 10px 16px; font-weight: 600; font-size: 14px; }
+  .app-bar .sp { flex: 1; } .app-bar small { color: #9FB0C3; font-weight: 400; font-family: var(--fv-font-mono); font-size: 11.5px; }
+  .app-body { padding: 16px; display: grid; gap: 14px; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .stat { background: var(--fv-surface); border: 1px solid var(--fv-border); border-radius: var(--fv-radius); padding: 12px 14px; }
+  .stat .n { font-size: 22px; font-weight: 600; color: var(--fv-heading); }
+  .stat .l { font-size: 12px; color: var(--fv-text-muted); }
+  .rules li { margin: 4px 0; }
+  .ratio-bar { display: flex; height: 26px; border-radius: 6px; overflow: hidden; font-size: 11.5px; font-weight: 600; }
+  .ratio-bar div { display: flex; align-items: center; justify-content: center; }
+  @media (max-width: 720px) { .hero { grid-template-columns: 1fr; } .stats { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <svg width="34" height="34" viewBox="0 0 64 64" aria-hidden="true"><polygon points="32,4 56.249,18 56.249,46 32,60 7.751,46 7.751,18" fill="none" stroke="#E6EDF5" stroke-width="3.5" stroke-linejoin="round"/><polygon points="32,12 49.321,22 49.321,42 32,52 14.679,42 14.679,22" fill="none" stroke="#6EA8E0" stroke-width="3.5" stroke-linejoin="round"/><polygon points="32,18 44.124,25 44.124,39 32,46 19.876,39 19.876,25" fill="#E6EDF5" stroke="#E6EDF5" stroke-width="2" stroke-linejoin="round"/><path d="M26 32.4 L30.2 36.6 L38.2 27.8" fill="none" stroke="#0F2A44" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <h1>FileVow brand and UI guide</h1><span>v1.0</span>
+</div></header>
+
+<div class="wrap">
+
+<h2>The mark</h2>
+<p class="lead">One symbol, no wordmark. Three nested hexagons stand for FileVow's three verification layers, sealed around a check mark. The hexagon is the shape of strength and structure, which suits integrity, and it avoids the overused padlock and shield.</p>
+<div class="card hero">
+  <img src="logo-mark.svg" width="200" height="200" alt="FileVow mark">
+  <div class="layers">
+    <div class="layer"><div class="dot" style="background:#0F2A44"></div><div><b>Outer hexagon: the mirror.</b> <span class="muted">The encrypted reference copy that surrounds and protects everything.</span></div></div>
+    <div class="layer"><div class="dot" style="background:#2F6FB3"></div><div><b>Middle hexagon: the RSA signature.</b> <span class="muted">The seal that authenticates the record. It is the lighter blue ring.</span></div></div>
+    <div class="layer"><div class="dot" style="background:#0F2A44"></div><div><b>Solid core: the SHA-256 fingerprint.</b> <span class="muted">The file's identity at the centre.</span></div></div>
+    <div class="layer"><div class="dot" style="background:#fff;border:1px solid #CBD5E1"></div><div><b>Check mark: the vow is kept.</b> <span class="muted">All three layers verified.</span></div></div>
+  </div>
+</div>
+
+<h3>Variants</h3>
+<div class="grid g4">
+  <div><div class="tile light"><img src="logo-mark.svg" width="96" height="96" alt=""></div><div class="cap"><span class="mono">logo-mark.svg</span> — default, on light backgrounds</div></div>
+  <div><div class="tile dark"><img src="logo-mark-reversed.svg" width="96" height="96" alt=""></div><div class="cap"><span class="mono">logo-mark-reversed.svg</span> — on navy or dark mode</div></div>
+  <div><div class="tile tint" style="color:#0F2A44"><img src="logo-mark-mono.svg" width="96" height="96" alt=""></div><div class="cap"><span class="mono">logo-mark-mono.svg</span> — one colour (print, stamps, PDF headers)</div></div>
+  <div><div class="tile light"><img src="app-icon.svg" width="96" height="96" alt=""></div><div class="cap"><span class="mono">app-icon.svg</span> — app icon, desktop shortcut</div></div>
+</div>
+
+<h3>Sizes</h3>
+<div class="card"><div class="sizes">
+  <div><img src="logo-mark.svg" width="96" height="96" alt=""><br>96 px</div>
+  <div><img src="logo-mark.svg" width="48" height="48" alt=""><br>48 px</div>
+  <div><img src="logo-mark.svg" width="32" height="32" alt=""><br>32 px · minimum for the full mark</div>
+  <div><img src="favicon.svg" width="24" height="24" alt=""><br>24 px · favicon.svg</div>
+  <div><img src="favicon.svg" width="16" height="16" alt=""><br>16 px · favicon.svg</div>
+</div>
+<p class="cap" style="margin-top:14px">Below 32 px the rings blur together, so use <span class="mono">favicon.svg</span> (solid hexagon and check). Keep clear space around the mark equal to one ring gap (about 1/8 of its width). Never stretch, rotate, recolour outside the palette, or add shadows or gradients.</p></div>
+
+<h2>Colour palette</h2>
+<p class="lead">Navy and blue are the colours people most associate with trust, security and reliability; banks, governments and security vendors use them for that reason. The palette is deliberately calm: mostly neutral slate, navy for structure, and colour only where it means something.</p>
+
+<h3>Brand</h3>
+<div class="grid g4">
+  <div class="sw"><div class="chip" style="background:#0F2A44;color:#fff">Navy 900</div><div class="meta"><b>#0F2A44</b>Logo, top bar, headings<br><span class="ratio">14.6 : 1 on white · AAA</span></div></div>
+  <div class="sw"><div class="chip" style="background:#1D4E89;color:#fff">Blue 700</div><div class="meta"><b>#1D4E89</b>Primary buttons, active navigation<br><span class="ratio">8.4 : 1 white text · AAA</span></div></div>
+  <div class="sw"><div class="chip" style="background:#2F6FB3;color:#fff">Blue 500</div><div class="meta"><b>#2F6FB3</b>Links, focus ring, logo middle ring<br><span class="ratio">5.2 : 1 on white · AA</span></div></div>
+  <div class="sw"><div class="chip" style="background:#E6EEF7;color:#1D4E89">Blue 100</div><div class="meta"><b>#E6EEF7</b>Selected rows, info backgrounds<br><span class="ratio">7.2 : 1 with Blue 700 text · AAA</span></div></div>
+</div>
+
+<h3>Neutrals</h3>
+<div class="grid g4">
+  <div class="sw"><div class="chip" style="background:#1E293B;color:#fff">Slate 900</div><div class="meta"><b>#1E293B</b>Body text<br><span class="ratio">14.6 : 1 · AAA</span></div></div>
+  <div class="sw"><div class="chip" style="background:#475569;color:#fff">Slate 600</div><div class="meta"><b>#475569</b>Secondary text<br><span class="ratio">7.6 : 1 · AAA</span></div></div>
+  <div class="sw"><div class="chip" style="background:#CBD5E1;color:#1E293B">Slate 300</div><div class="meta"><b>#CBD5E1</b>Borders, inputs</div></div>
+  <div class="sw"><div class="chip" style="background:#F8FAFC;color:#1E293B">Slate 50</div><div class="meta"><b>#F8FAFC</b>Page background (cards are white)</div></div>
+</div>
+
+<h3>Status colours</h3>
+<p class="lead" style="margin-bottom:12px">Status colours carry meaning, so never use them for decoration. Always show a text label or icon next to them, so colour-blind users read the same thing.</p>
+<div class="grid g4">
+  <div class="sw"><div class="chip" style="background:#E7F4EC;color:#1E7A4C">Verified</div><div class="meta"><b>#1E7A4C</b> on <span class="mono">#E7F4EC</span><br>OK, signature valid, restored<br><span class="ratio">4.7 : 1 · AA</span></div></div>
+  <div class="sw"><div class="chip" style="background:#FBF1DE;color:#8A5A0F">Pending review</div><div class="meta"><b>#8A5A0F</b> on <span class="mono">#FBF1DE</span><br>Change detected, waiting for a decision<br><span class="ratio">5.3 : 1 · AA</span></div></div>
+  <div class="sw"><div class="chip" style="background:#FDECEA;color:#B42318">Critical</div><div class="meta"><b>#B42318</b> on <span class="mono">#FDECEA</span><br>Tampering, rollback, chain broken<br><span class="ratio">5.8 : 1 · AA</span></div></div>
+  <div class="sw"><div class="chip" style="background:#E6EEF7;color:#1D4E89">Info</div><div class="meta"><b>#1D4E89</b> on <span class="mono">#E6EEF7</span><br>Runs, neutral notices<br><span class="ratio">7.2 : 1 · AAA</span></div></div>
+</div>
+
+<h3>Proportion: the 60 / 30 / 10 rule</h3>
+<div class="card">
+  <div class="ratio-bar">
+    <div style="width:60%;background:#F1F5F9;color:#475569">60% neutrals (slate and white)</div>
+    <div style="width:30%;background:#0F2A44;color:#fff">30% navy</div>
+    <div style="width:10%;background:#2F6FB3;color:#fff">10% blue</div>
+  </div>
+  <p class="cap" style="margin-top:10px">Status colours sit outside this ratio and appear only when something needs attention. A screen that is mostly calm makes a red alert impossible to miss.</p>
+</div>
+
+<h3>Dark mode</h3>
+<div class="grid g4">
+  <div class="sw"><div class="chip" style="background:#0B1623;color:#E6EDF5">Background</div><div class="meta"><b>#0B1623</b> page · <span class="mono">#13233A</span> cards</div></div>
+  <div class="sw"><div class="chip" style="background:#13233A;color:#E6EDF5">Text #E6EDF5</div><div class="meta"><b>#E6EDF5</b> text · <span class="mono">#9FB0C3</span> muted<br><span class="ratio">13.4 : 1 on cards · AAA</span></div></div>
+  <div class="sw"><div class="chip" style="background:#13233A;color:#6EA8E0">Blue #6EA8E0</div><div class="meta"><b>#6EA8E0</b> links and focus<br><span class="ratio">6.3 : 1 on cards · AA</span></div></div>
+  <div class="sw"><div class="chip" style="background:#13233A"><span style="color:#4CC38A">OK</span>&nbsp;·&nbsp;<span style="color:#E5A93B">Pending</span>&nbsp;·&nbsp;<span style="color:#F27066">Critical</span></div><div class="meta"><b>#4CC38A · #E5A93B · #F27066</b>Status colours, lightened for dark backgrounds</div></div>
+</div>
+
+<h2>Typography</h2>
+<div class="grid g2">
+  <div class="card"><div style="font-size:26px;font-weight:600;color:var(--fv-heading)">Inter</div><p class="muted" style="margin:4px 0 10px">Everything in the interface. Neutral, very readable at small sizes, free (Google Fonts).</p>
+    <div style="font-size:20px;font-weight:600;color:var(--fv-heading)">Review queue — 20 / 600</div>
+    <div style="font-size:16px;font-weight:500">Section title — 16 / 500</div>
+    <div style="font-size:14px">Body text and tables — 14 / 400</div>
+    <div style="font-size:12px;color:var(--fv-text-subtle)">Captions and timestamps — 12 / 400</div></div>
+  <div class="card"><div style="font-size:26px;font-family:var(--fv-font-mono);color:var(--fv-heading)">JetBrains Mono</div><p class="muted" style="margin:4px 0 10px">Only for machine values: hashes, file paths, key fingerprints. Fixed-width digits make two hashes easy to compare by eye.</p>
+    <div class="mono">9f86d081884c7d659a2feaa0c55ad015</div>
+    <div class="mono" style="color:var(--fv-critical)">a1c3e5f7d9024b6e8c1a3f5d7b9e0c24</div>
+    <div class="mono muted">C:\inetpub\wwwroot\index.html</div>
+    <div class="mono muted">key a1b2c3d4e5f60718</div></div>
+</div>
+
+<h2>In the interface</h2>
+<div class="grid g2" style="margin-bottom:16px">
+  <div class="card"><h3 style="margin-top:0">Status badges</h3>
+    <span class="badge b-ok">&#10003; Verified</span>
+    <span class="badge b-pend">&#9679; Pending review</span>
+    <span class="badge b-crit">&#9650; Record tampered</span>
+    <span class="badge b-info">&#8505; Run #4182</span></div>
+  <div class="card"><h3 style="margin-top:0">Buttons</h3>
+    <button class="btn btn-primary">Accept change</button>
+    <button class="btn btn-secondary">Restore original</button>
+    <button class="btn btn-danger">Escalate</button>
+    <p class="cap">One primary action per screen. Destructive actions are outlined, never solid red.</p></div>
+</div>
+
+<div class="app">
+  <div class="app-bar">
+    <svg width="22" height="22" viewBox="0 0 64 64" aria-hidden="true"><polygon points="32,3 57.115,17.5 57.115,46.5 32,61 6.885,46.5 6.885,17.5" fill="#E6EDF5" stroke="#E6EDF5" stroke-width="4" stroke-linejoin="round"/><path d="M21 33 L28.5 40.5 L43.5 24.5" fill="none" stroke="#0F2A44" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Overview <span class="sp"></span><small>baseline key a1b2c3d4e5f60718</small>
+  </div>
+  <div class="app-body">
+    <div class="stats">
+      <div class="stat"><div class="n">1,284</div><div class="l">Files monitored</div></div>
+      <div class="stat"><div class="n" style="color:var(--fv-verified)">1,281</div><div class="l">Verified</div></div>
+      <div class="stat"><div class="n" style="color:var(--fv-pending)">2</div><div class="l">Pending review</div></div>
+      <div class="stat"><div class="n" style="color:var(--fv-critical)">1</div><div class="l">Critical</div></div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <table>
+        <thead><tr><th>File</th><th>Status</th><th>Observed SHA-256</th><th>Detected</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">wwwroot\config.php</td><td><span class="badge b-crit">&#9650; Record tampered</span></td><td class="mono">7c21…e9f0</td><td class="muted">10:31 UTC</td></tr>
+          <tr><td class="mono">wwwroot\index.html</td><td><span class="badge b-pend">&#9679; Pending review</span></td><td class="mono">a1c3…77b2</td><td class="muted">10:30 UTC</td></tr>
+          <tr><td class="mono">wwwroot\js\app.js</td><td><span class="badge b-pend">&#9679; Pending review</span></td><td class="mono">5d0e…1a4c</td><td class="muted">10:30 UTC</td></tr>
+          <tr><td class="mono">wwwroot\about.html</td><td><span class="badge b-ok">&#10003; Verified</span></td><td class="mono">9f86…0a08</td><td class="muted">10:30 UTC</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<h2>Rules for a trustworthy interface</h2>
+<div class="card"><ul class="rules">
+  <li><b>Calm by default.</b> White cards on a light slate page, navy structure. No gradients, glows, neon or animations for decoration.</li>
+  <li><b>Colour means something.</b> Green is verified, amber is pending, red is critical, and nothing else uses those colours.</li>
+  <li><b>Never colour alone.</b> Every status has a word and an icon as well.</li>
+  <li><b>Show the proof.</b> Hashes, key fingerprints and timestamps appear in monospace, so users can see the evidence instead of being asked to believe it.</li>
+  <li><b>Consistent and plain.</b> One font family, a 4 px spacing grid, 6 px corners, the same badge shapes everywhere. Predictable interfaces feel reliable.</li>
+  <li><b>Accessible.</b> All text meets WCAG AA contrast. Focus outlines are always visible (blue 2 px ring).</li>
+</ul></div>
+
+</div>
+</body>
+</html>

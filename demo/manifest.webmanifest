@@ -1,0 +1,14 @@
+{
+  "name": "FileVow",
+  "short_name": "FileVow",
+  "description": "Three-layer file integrity monitoring",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "background_color": "#EEF2F7",
+  "theme_color": "#EEF2F7",
+  "icons": [
+    { "src": "../design/app-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

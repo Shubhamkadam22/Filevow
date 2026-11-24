@@ -1,0 +1,1039 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FileVow</title>
+<meta name="theme-color" content="#EEF2F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0B1623" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="../design/favicon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="../design/tokens.css">
+<style>
+:root {
+  --win-bg: #EEF2F7; --card: #FFFFFF; --card-2: #F8FAFC; --stroke: #E2E8F0; --stroke-strong: #CBD5E1;
+  --hover: rgba(15,42,68,.05); --pressed: rgba(15,42,68,.09); --nav-sel: rgba(15,42,68,.07); --row-sel: #E6EEF7;
+  --accent: #2F6FB3; --overlay: rgba(15,23,42,.32);
+  --shadow-dialog: 0 32px 64px rgba(15,42,68,.22), 0 2px 21px rgba(15,42,68,.14);
+  --shadow-fly: 0 8px 24px rgba(15,42,68,.16), 0 1px 4px rgba(15,42,68,.08);
+  --row-h: 66px; --pad-y: 12px; --list-h: 58px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --win-bg: #0B1623; --card: #13233A; --card-2: #102035; --stroke: #22374F; --stroke-strong: #2E4766;
+  --hover: rgba(255,255,255,.055); --pressed: rgba(255,255,255,.085); --nav-sel: rgba(255,255,255,.07); --row-sel: #16314F;
+  --accent: #6EA8E0; --overlay: rgba(0,0,0,.5);
+  --shadow-dialog: 0 32px 64px rgba(0,0,0,.5), 0 2px 21px rgba(0,0,0,.4); --shadow-fly: 0 8px 24px rgba(0,0,0,.45);
+} }
+:root[data-theme="dark"] {
+  --win-bg: #0B1623; --card: #13233A; --card-2: #102035; --stroke: #22374F; --stroke-strong: #2E4766;
+  --hover: rgba(255,255,255,.055); --pressed: rgba(255,255,255,.085); --nav-sel: rgba(255,255,255,.07); --row-sel: #16314F;
+  --accent: #6EA8E0; --overlay: rgba(0,0,0,.5);
+  --shadow-dialog: 0 32px 64px rgba(0,0,0,.5), 0 2px 21px rgba(0,0,0,.4); --shadow-fly: 0 8px 24px rgba(0,0,0,.45);
+}
+body.compact { --row-h: 48px; --pad-y: 7px; --list-h: 46px; }
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--win-bg); color: var(--fv-text); font: 400 14px/20px var(--fv-font-sans);
+       -webkit-font-smoothing: antialiased; overflow: hidden; user-select: none; display: grid; grid-template-rows: 48px 1fr 26px; }
+svg.i { width: 16px; height: 16px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.mono { font-family: var(--fv-font-mono); font-size: 12.5px; user-select: text; }
+.muted { color: var(--fv-text-muted); } .subtle { color: var(--fv-text-subtle); font-size: 12px; }
+kbd { font: 600 11px/1 var(--fv-font-sans); color: var(--fv-text-muted); background: var(--card-2); border: 1px solid var(--stroke);
+      border-bottom-width: 2px; border-radius: 4px; padding: 2px 5px; white-space: nowrap; }
+.btn kbd { margin-left: 2px; background: transparent; }
+.btn.primary kbd { color: rgba(255,255,255,.85); border-color: rgba(255,255,255,.35); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+/* ---------------- title bar ---------------- */
+.titlebar { display: flex; align-items: center; gap: 10px; padding-left: 6px; -webkit-app-region: drag; app-region: drag; position: relative; }
+.tbbtn { all: unset; -webkit-app-region: no-drag; app-region: no-drag; width: 40px; height: 32px; border-radius: 4px; display: grid; place-items: center; color: var(--fv-text); position: relative; }
+.tbbtn:hover { background: var(--hover); } .tbbtn[disabled] { color: var(--fv-text-subtle); opacity: .5; pointer-events: none; }
+.tbbtn .dot { position: absolute; top: 6px; right: 9px; width: 7px; height: 7px; border-radius: 50%; background: var(--fv-critical); border: 1.5px solid var(--win-bg); }
+.titlebar img { width: 18px; height: 18px; } .titlebar .name { font-size: 12px; }
+.titlebar .sp { flex: 1; }
+.search { all: unset; -webkit-app-region: no-drag; app-region: no-drag; width: min(420px, 36vw); height: 32px; display: flex; align-items: center; gap: 8px;
+          padding: 0 8px 0 10px; border-radius: 4px; background: var(--card); border: 1px solid var(--stroke); border-bottom-color: var(--stroke-strong);
+          color: var(--fv-text-subtle); font-size: 13px; cursor: text; }
+.search span { flex: 1; } .search:hover { border-color: var(--stroke-strong); }
+.wincontrols { display: flex; align-self: stretch; -webkit-app-region: no-drag; app-region: no-drag; }
+.wincontrols button { all: unset; width: 46px; display: grid; place-items: center; color: var(--fv-text); }
+.wincontrols button:hover { background: var(--hover); } .wincontrols button.close:hover { background: #C42B1C; color: #fff; }
+.wincontrols svg { width: 10px; height: 10px; stroke-width: 1; }
+@media (display-mode: window-controls-overlay) {
+  .wincontrols { display: none; }
+  .titlebar { padding-right: calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100vw)); }
+}
+
+/* ---------------- shell ---------------- */
+.shell { display: grid; grid-template-columns: 280px 1fr; min-height: 0; }
+nav { padding: 2px 4px 10px; display: flex; flex-direction: column; overflow-y: auto; }
+.account { display: flex; align-items: center; gap: 12px; padding: 10px 14px 14px; }
+.avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--fv-navy-900); display: grid; place-items: center; flex: none; }
+.avatar img { width: 30px; height: 30px; }
+.account b { display: block; font-weight: 600; } .account span { font-size: 12px; color: var(--fv-text-muted); display: flex; align-items: center; gap: 6px; }
+.live { width: 8px; height: 8px; border-radius: 50%; background: var(--fv-verified); box-shadow: 0 0 0 0 var(--fv-verified); animation: pulse 2.4s infinite; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--fv-verified) 55%, transparent); } 70% { box-shadow: 0 0 0 6px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+.navitem { all: unset; position: relative; display: flex; align-items: center; gap: 14px; height: 36px; margin: 2px 8px; padding: 0 10px 0 12px; border-radius: 4px; color: var(--fv-text); }
+.navitem:hover { background: var(--hover); } .navitem:active { background: var(--pressed); }
+.navitem.sel { background: var(--nav-sel); font-weight: 600; }
+.navitem.sel::before { content: ""; position: absolute; left: 0; top: 10px; width: 3px; height: 16px; border-radius: 2px; background: var(--accent); }
+.navitem .count { margin-left: auto; min-width: 20px; height: 18px; padding: 0 6px; border-radius: 9px; font-size: 11px; font-weight: 600; display: grid; place-items: center; background: var(--fv-critical); color: #fff; }
+.navitem .count.amber { background: var(--fv-pending); }
+.navitem .hint { margin-left: auto; opacity: 0; transition: opacity .15s; }
+.navitem:hover .hint { opacity: 1; } .navitem .count + .hint { display: none; }
+.navitem:focus-visible, .btn:focus-visible, .chip:focus-visible, .lrow:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+nav .grow { flex: 1; }
+main { background: var(--card-2); border-top-left-radius: 8px; border-top: 1px solid var(--stroke); border-left: 1px solid var(--stroke); overflow-y: auto; min-height: 0; position: relative; }
+.page { display: none; max-width: 1180px; padding: 22px 36px 40px; }
+.page.on { display: block; animation: enter .16s ease-out; }
+.page.full { max-width: none; padding: 0; height: 100%; }
+.page.full.on { display: grid; }
+@keyframes enter { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.ptitle { font-size: 28px; line-height: 36px; font-weight: 600; margin: 0 0 16px; color: var(--fv-heading); display: flex; align-items: center; gap: 10px; }
+.ptitle .sp { flex: 1; }
+h2.sec { font-size: 14px; font-weight: 600; margin: 24px 0 8px; color: var(--fv-heading); display: flex; align-items: center; gap: 8px; }
+h2.sec .sp { flex: 1; } h2.sec a { font-weight: 400; font-size: 13px; color: var(--fv-link); cursor: default; }
+h2.sec a:hover { text-decoration: underline; }
+
+/* ---------------- status bar ---------------- */
+.statusbar { display: flex; align-items: center; gap: 0; font-size: 12px; color: var(--fv-text-muted); background: var(--win-bg); border-top: 1px solid var(--stroke); padding: 0 8px; overflow: hidden; white-space: nowrap; }
+.statusbar .it { display: inline-flex; align-items: center; gap: 6px; padding: 0 10px; height: 100%; }
+.statusbar .it + .it { border-left: 1px solid var(--stroke); }
+.statusbar .it.click:hover { background: var(--hover); color: var(--fv-text); }
+.statusbar svg.i { width: 13px; height: 13px; } .statusbar .sp { flex: 1; }
+.statusbar .ok { color: var(--fv-verified); } .statusbar .bad { color: var(--fv-critical); }
+
+/* ---------------- shared cards / rows / controls ---------------- */
+.card { background: var(--card); border: 1px solid var(--stroke); border-radius: 8px; }
+.row { display: flex; align-items: center; gap: 16px; min-height: var(--row-h); padding: var(--pad-y) 16px; margin-bottom: 4px; background: var(--card); border: 1px solid var(--stroke); border-radius: 6px; }
+.row.click:hover { background: color-mix(in srgb, var(--card) 93%, var(--fv-text) 7%); }
+.row > svg.i { width: 20px; height: 20px; }
+.row .txt { flex: 1; min-width: 0; } .row .txt b { display: block; font-weight: 400; }
+.row .txt span { display: block; font-size: 12px; color: var(--fv-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row .chev { color: var(--fv-text-subtle); } .row .meta { font-size: 12px; color: var(--fv-text-muted); white-space: nowrap; }
+svg.sev { width: 18px; height: 18px; }
+svg.sev.crit, .row > svg.sev.crit { color: var(--fv-critical); } svg.sev.high, .row > svg.sev.high { color: var(--fv-pending); }
+svg.sev.med, .row > svg.sev.med { color: var(--fv-link); } svg.sev.ok, .row > svg.sev.ok { color: var(--fv-verified); }
+.btn { all: unset; display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 32px; padding: 0 12px; border-radius: 4px; font-size: 14px;
+       background: var(--card); color: var(--fv-text); border: 1px solid var(--stroke); border-bottom-color: var(--stroke-strong); white-space: nowrap; }
+.btn:hover { background: color-mix(in srgb, var(--card) 93%, var(--fv-text) 7%); } .btn:active { opacity: .8; }
+.btn.primary { background: var(--fv-primary); color: var(--fv-on-primary); border-color: transparent; border-bottom-color: rgba(0,0,0,.25); }
+.btn.primary:hover { background: var(--fv-primary-hover); }
+.btn.subtle { background: transparent; border-color: transparent; } .btn.subtle:hover { background: var(--hover); }
+.btn.danger { color: var(--fv-critical); } .btn.icon { width: 32px; padding: 0; }
+.btn[disabled] { opacity: .45; pointer-events: none; } .btn svg.i { width: 16px; height: 16px; }
+.toggle { display: inline-flex; align-items: center; gap: 12px; }
+.toggle input { appearance: none; margin: 0; width: 40px; height: 20px; border-radius: 10px; border: 1px solid var(--fv-text-muted); position: relative; transition: background .15s; }
+.toggle input::after { content: ""; position: absolute; top: 3px; left: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--fv-text-muted); transition: transform .15s; }
+.toggle input:checked { background: var(--accent); border-color: var(--accent); } .toggle input:checked::after { transform: translateX(19px); background: #fff; }
+.toggle input:disabled { opacity: .55; }
+select.sel, input.txtin { height: 32px; border-radius: 4px; font: inherit; font-size: 13.5px; color: var(--fv-text); background-color: var(--card);
+       border: 1px solid var(--stroke); border-bottom-color: var(--stroke-strong); outline: none; }
+select.sel { appearance: none; padding: 0 30px 0 10px; background: var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M6 8l4 4 4-4' fill='none' stroke='%2364748B' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 8px center / 14px; }
+input.txtin { padding: 0 10px; user-select: text; } input.txtin:focus { border-bottom: 2px solid var(--accent); }
+.infield { position: relative; display: flex; align-items: center; } .infield svg { position: absolute; left: 9px; color: var(--fv-text-subtle); }
+.infield input { padding-left: 32px; width: 100%; } .infield kbd { position: absolute; right: 7px; }
+.chip { all: unset; display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 11px; border-radius: 14px; font-size: 13px; border: 1px solid var(--stroke); background: var(--card); }
+.chip:hover { background: var(--hover); } .chip b { font-weight: 600; font-size: 12px; color: var(--fv-text-muted); }
+.chip.on { background: var(--fv-primary); color: #fff; border-color: transparent; } .chip.on b { color: rgba(255,255,255,.85); }
+.chip .d { width: 8px; height: 8px; border-radius: 50%; }
+.pill { display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 9px; border-radius: 11px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.pill svg { width: 13px; height: 13px; stroke-width: 2; }
+.pill.ok { background: var(--fv-verified-bg); color: var(--fv-verified); } .pill.high { background: var(--fv-pending-bg); color: var(--fv-pending); }
+.pill.crit { background: var(--fv-critical-bg); color: var(--fv-critical); } .pill.med { background: var(--fv-info-bg); color: var(--fv-info); }
+.infobar { display: flex; gap: 12px; align-items: flex-start; padding: 11px 14px; border-radius: 6px; margin-bottom: 12px; border: 1px solid; }
+.infobar svg.i { width: 18px; height: 18px; margin-top: 1px; } .infobar b { font-weight: 600; margin-right: 6px; } .infobar .grow { flex: 1; }
+.infobar.warn { background: var(--fv-pending-bg); border-color: color-mix(in srgb, var(--fv-pending) 25%, transparent); } .infobar.warn > svg { color: var(--fv-pending); }
+.infobar.crit { background: var(--fv-critical-bg); border-color: color-mix(in srgb, var(--fv-critical) 25%, transparent); } .infobar.crit > svg { color: var(--fv-critical); }
+.infobar.ok { background: var(--fv-verified-bg); border-color: color-mix(in srgb, var(--fv-verified) 25%, transparent); } .infobar.ok > svg { color: var(--fv-verified); }
+.infobar.info { background: var(--fv-info-bg); border-color: color-mix(in srgb, var(--fv-info) 25%, transparent); } .infobar.info > svg { color: var(--fv-info); }
+.cmdbar { display: flex; align-items: center; gap: 8px; margin: -2px 0 14px; flex-wrap: wrap; } .cmdbar .sp { flex: 1; }
+
+/* ---------------- home ---------------- */
+.hero { display: grid; grid-template-columns: auto 1fr auto; gap: 22px; align-items: center; padding: 22px 24px; }
+.hero .badge-ic { width: 68px; height: 68px; border-radius: 50%; display: grid; place-items: center; }
+.hero .badge-ic svg { width: 34px; height: 34px; stroke-width: 1.6; }
+.hero.ok .badge-ic { background: var(--fv-verified-bg); color: var(--fv-verified); } .hero.warn .badge-ic { background: var(--fv-critical-bg); color: var(--fv-critical); }
+.hero h1 { margin: 0; font-size: 20px; line-height: 28px; font-weight: 600; color: var(--fv-heading); }
+.hero p { margin: 2px 0 0; color: var(--fv-text-muted); } .hero .acts { display: flex; gap: 8px; }
+.facts { display: flex; gap: 18px; margin-top: 8px; font-size: 12px; color: var(--fv-text-muted); flex-wrap: wrap; }
+.facts span { display: inline-flex; align-items: center; gap: 6px; } .facts svg.i { width: 14px; height: 14px; } .facts b { color: var(--fv-text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.progress { height: 3px; border-radius: 2px; background: var(--stroke); overflow: hidden; margin-top: 10px; display: none; } .progress.on { display: block; }
+.progress div { height: 100%; width: 0; background: var(--accent); transition: width .15s linear; }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.layer { padding: 14px 16px; }
+.layer .top { display: flex; align-items: center; gap: 10px; font-weight: 600; } .layer .top svg { width: 18px; height: 18px; }
+.layer .n { font-size: 24px; line-height: 32px; font-weight: 600; color: var(--fv-heading); margin-top: 6px; font-variant-numeric: tabular-nums; }
+.layer .st { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--fv-verified); margin-top: 6px; }
+.layer .st svg { width: 14px; height: 14px; } .layer .st.bad { color: var(--fv-critical); }
+.spark { padding: 14px 16px 12px; }
+.spark .bars { display: flex; align-items: flex-end; gap: 2px; height: 44px; margin-top: 10px; }
+.spark .bars i { flex: 1; border-radius: 1px; background: color-mix(in srgb, var(--fv-verified) 55%, transparent); height: 30%; min-width: 2px; }
+.spark .bars i.bad { background: var(--fv-critical); height: 100%; } .spark .bars i.gap { background: var(--stroke); height: 12%; }
+.spark .axis { display: flex; justify-content: space-between; font-size: 11px; color: var(--fv-text-subtle); margin-top: 4px; }
+.spark .hd { display: flex; align-items: baseline; gap: 10px; } .spark .hd b { font-weight: 600; } .spark .hd .sp { flex: 1; }
+.two { display: grid; grid-template-columns: 1.25fr 1fr; gap: 16px; align-items: start; }
+.timeline { padding: 6px 16px; }
+.tl { display: grid; grid-template-columns: 14px 1fr auto; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--stroke); font-size: 13px; }
+.tl:last-child { border-bottom: 0; } .tl .d { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; background: var(--fv-text-subtle); }
+.tl .d.ok { background: var(--fv-verified); } .tl .d.crit { background: var(--fv-critical); } .tl .d.high { background: var(--fv-pending); } .tl .d.info { background: var(--accent); }
+.tl small { display: block; color: var(--fv-text-muted); font-size: 12px; } .tl time { font-size: 12px; color: var(--fv-text-subtle); white-space: nowrap; }
+
+/* ---------------- review (master-detail) ---------------- */
+#p-review { grid-template-columns: minmax(340px, 400px) 1fr; }
+.master { border-right: 1px solid var(--stroke); display: flex; flex-direction: column; min-height: 0; background: var(--card-2); }
+.master .mh { padding: 18px 16px 10px; border-bottom: 1px solid var(--stroke); }
+.master .mh .ptitle { font-size: 22px; line-height: 30px; margin-bottom: 10px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0 8px; }
+.bulk { display: none; align-items: center; gap: 6px; padding: 8px 12px; background: var(--row-sel); border-bottom: 1px solid var(--stroke); font-size: 13px; }
+.bulk.on { display: flex; } .bulk .sp { flex: 1; } .bulk .btn { height: 28px; font-size: 13px; padding: 0 10px; }
+.list { overflow-y: auto; flex: 1; padding: 6px 8px 16px; }
+.lgroup { font-size: 12px; font-weight: 600; color: var(--fv-text-muted); padding: 10px 8px 4px; display: flex; gap: 6px; }
+.lrow { position: relative; display: grid; grid-template-columns: 18px 18px 1fr auto; gap: 10px; align-items: center; min-height: var(--list-h); padding: 6px 10px; border-radius: 6px; margin-bottom: 2px; }
+.lrow:hover { background: var(--hover); } .lrow.sel { background: var(--row-sel); }
+.lrow.sel::before { content: ""; position: absolute; left: 0; top: 50%; translate: 0 -50%; width: 3px; height: 18px; border-radius: 2px; background: var(--accent); }
+.lrow input { margin: 0; width: 16px; height: 16px; accent-color: var(--fv-primary); }
+.lrow .t { min-width: 0; } .lrow .t b { display: block; font-family: var(--fv-font-mono); font-size: 13px; font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lrow .t span { display: block; font-size: 12px; color: var(--fv-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lrow time { font-size: 12px; color: var(--fv-text-subtle); align-self: start; margin-top: 4px; }
+.empty { text-align: center; padding: 48px 24px; color: var(--fv-text-muted); }
+.empty .ic { width: 56px; height: 56px; border-radius: 50%; margin: 0 auto 12px; display: grid; place-items: center; background: var(--fv-verified-bg); color: var(--fv-verified); }
+.empty .ic svg { width: 28px; height: 28px; } .empty b { display: block; color: var(--fv-text); font-size: 16px; margin-bottom: 4px; font-weight: 600; }
+.detail { overflow-y: auto; min-height: 0; container-type: inline-size; }
+@container (max-width: 960px) { .toolbar kbd { display: none; } .toolbar .btn { padding: 0 10px; } }
+@container (max-width: 700px) { .lchecks { grid-template-columns: repeat(2, 1fr) !important; } .kv { grid-template-columns: 110px 1fr 1fr; } }
+.detail .inner { padding: 18px 28px 40px; max-width: 1000px; }
+.dhead { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 12px; }
+.dhead .t { flex: 1; min-width: 0; } .dhead h1 { margin: 0; font-size: 22px; line-height: 30px; font-weight: 600; color: var(--fv-heading); font-family: var(--fv-font-mono); }
+.dhead .path { display: flex; align-items: center; gap: 4px; color: var(--fv-text-muted); }
+.toolbar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; padding: 8px; background: var(--card); border: 1px solid var(--stroke); border-radius: 8px; margin-bottom: 14px; }
+.toolbar .sp { flex: 1; } .toolbar .sepv { width: 1px; height: 20px; background: var(--stroke); margin: 0 2px; }
+.lchecks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+.lc { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 6px; background: var(--card); border: 1px solid var(--stroke); }
+.lc svg.i { width: 18px; height: 18px; } .lc b { display: block; font-weight: 600; font-size: 13px; } .lc span { font-size: 12px; color: var(--fv-text-muted); }
+.lc.pass svg { color: var(--fv-verified); } .lc.fail { border-color: color-mix(in srgb, var(--fv-critical) 40%, var(--stroke)); background: var(--fv-critical-bg); }
+.lc.fail svg { color: var(--fv-critical); } .lc.fail span { color: var(--fv-critical); }
+.lc.na svg { color: var(--fv-text-subtle); }
+.kv { display: grid; grid-template-columns: 150px 1fr 1fr; background: var(--card); border: 1px solid var(--stroke); border-radius: 6px; overflow: hidden; }
+.kv > div { padding: 9px 14px; border-bottom: 1px solid var(--stroke); font-size: 13px; min-width: 0; display: flex; align-items: center; gap: 6px; }
+.kv > div.h { font-size: 12px; color: var(--fv-text-muted); background: var(--card-2); font-weight: 600; }
+.kv > div.k { color: var(--fv-text-muted); } .kv > div.bad { color: var(--fv-critical); }
+.kv > div:nth-last-child(-n+3) { border-bottom: 0; } .kv .hash { overflow-wrap: anywhere; word-break: break-all; font-size: 12px; line-height: 18px; }
+.kv .hash b { font-weight: 700; }
+.copy { all: unset; flex: none; width: 24px; height: 24px; border-radius: 4px; display: grid; place-items: center; color: var(--fv-text-subtle); }
+.copy:hover { background: var(--hover); color: var(--fv-text); } .copy svg { width: 14px; height: 14px; }
+.diffbar { display: flex; align-items: center; gap: 8px; margin: 22px 0 8px; } .diffbar h2 { margin: 0; font-size: 14px; font-weight: 600; color: var(--fv-heading); }
+.diffbar .sp { flex: 1; } .diffbar .stat { font-size: 12px; } .diffbar .stat .a { color: var(--fv-verified); } .diffbar .stat .r { color: var(--fv-critical); }
+.seg { display: inline-flex; border: 1px solid var(--stroke); border-radius: 4px; overflow: hidden; }
+.seg button { all: unset; padding: 0 10px; height: 26px; font-size: 12.5px; display: grid; place-items: center; }
+.seg button:hover { background: var(--hover); } .seg button.on { background: var(--fv-primary); color: #fff; }
+.diff { background: var(--card); border: 1px solid var(--stroke); border-radius: 6px; overflow: hidden; }
+.diff .hd { display: grid; grid-template-columns: 1fr 1fr; font-size: 12px; font-weight: 600; color: var(--fv-text-muted); background: var(--card-2); border-bottom: 1px solid var(--stroke); }
+.diff .hd div { padding: 7px 12px; } .diff .hd div + div { border-left: 1px solid var(--stroke); }
+.diff .body { display: grid; grid-template-columns: 1fr 1fr; } .diff.uni .hd, .diff.uni .body { grid-template-columns: 1fr; }
+.diff .col { min-width: 0; } .diff .col + .col { border-left: 1px solid var(--stroke); }
+.ln { display: grid; grid-template-columns: 38px 1fr; font-family: var(--fv-font-mono); font-size: 12.5px; line-height: 21px; user-select: text; }
+.diff.uni .ln { grid-template-columns: 34px 34px 16px 1fr; }
+.ln i { font-style: normal; text-align: right; padding-right: 8px; color: var(--fv-text-subtle); } .ln u { text-decoration: none; color: var(--fv-text-subtle); }
+.ln span { white-space: pre; overflow: hidden; text-overflow: ellipsis; padding-right: 10px; }
+.ln.del { background: var(--fv-critical-bg); } .ln.del span, .ln.del u { color: var(--fv-critical); }
+.ln.add { background: var(--fv-verified-bg); } .ln.add span, .ln.add u { color: var(--fv-verified); }
+.ln mark { color: inherit; border-radius: 2px; padding: 0 1px; } .ln.del mark { background: color-mix(in srgb, var(--fv-critical) 22%, transparent); }
+.ln.add mark { background: color-mix(in srgb, var(--fv-verified) 25%, transparent); }
+.ln.empty { background: repeating-linear-gradient(45deg, transparent 0 6px, var(--hover) 6px 7px); }
+.ln.fold { grid-template-columns: 1fr !important; text-align: center; color: var(--fv-text-subtle); font-family: var(--fv-font-sans); font-size: 12px; background: var(--card-2); }
+.metachg { padding: 14px; font-size: 13px; }
+.dfoot { margin-top: 12px; }
+
+/* ---------------- tables ---------------- */
+.table { background: var(--card); border: 1px solid var(--stroke); border-radius: 6px; overflow: hidden; }
+.tr { display: grid; align-items: center; gap: 12px; padding: 0 14px; min-height: 42px; border-bottom: 1px solid var(--stroke); font-size: 13px; }
+body.compact .tr { min-height: 34px; }
+.tr:last-child { border-bottom: 0; } .tr.th { min-height: 34px; font-size: 12px; font-weight: 600; color: var(--fv-text-muted); background: var(--card-2); position: sticky; top: 0; }
+.tr.click:hover { background: var(--hover); }
+.runs .tr { grid-template-columns: 80px 1.1fr 1fr .6fr .7fr 1fr; } .audit .tr { grid-template-columns: 130px 1.1fr 1.7fr 1fr 100px; }
+.files .tr { grid-template-columns: 2.6fr 1fr 1.3fr .8fr 32px; }
+.ellip { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chart { padding: 14px 16px; } .chart svg { width: 100%; height: 90px; display: block; }
+
+/* ---------------- overlays ---------------- */
+.scrim { position: fixed; inset: 0; background: var(--overlay); display: none; align-items: center; justify-content: center; z-index: 30; }
+.scrim.on { display: flex; animation: fade .12s ease-out; } .scrim.top { align-items: flex-start; padding-top: 72px; }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+.dialog { width: 480px; max-width: calc(100vw - 32px); background: var(--card); border: 1px solid var(--stroke); border-radius: 8px; box-shadow: var(--shadow-dialog); overflow: hidden; animation: pop .16s cubic-bezier(.1,.9,.2,1); }
+@keyframes pop { from { transform: scale(1.03); opacity: 0; } to { transform: none; opacity: 1; } }
+.dialog .db { padding: 22px 24px; max-height: 70vh; overflow-y: auto; }
+.dialog h3 { margin: 0 0 6px; font-size: 20px; line-height: 28px; font-weight: 600; color: var(--fv-heading); display: flex; align-items: center; gap: 10px; }
+.dialog h3 img { width: 24px; height: 24px; } .dialog p { margin: 0 0 14px; color: var(--fv-text-muted); }
+.summary { background: var(--card-2); border: 1px solid var(--stroke); border-radius: 6px; padding: 10px 12px; margin-bottom: 14px; font-size: 13px; }
+.summary div { display: flex; justify-content: space-between; gap: 12px; padding: 2px 0; } .summary div span:first-child { color: var(--fv-text-muted); }
+.summary ul { margin: 4px 0 0; padding-left: 18px; max-height: 96px; overflow-y: auto; }
+.field { margin-bottom: 12px; } .field label { display: block; font-size: 13px; margin-bottom: 5px; }
+.field input { width: 100%; height: 32px; padding: 0 10px; border-radius: 4px; font: inherit; font-size: 14px; color: var(--fv-text); background: var(--card);
+               border: 1px solid var(--stroke); border-bottom: 1px solid var(--fv-text-subtle); outline: none; user-select: text; }
+.field input:focus { border-bottom: 2px solid var(--accent); }
+.field.err input { border-color: var(--fv-critical); } .field .msg { color: var(--fv-critical); font-size: 12px; margin-top: 3px; display: none; } .field.err .msg { display: block; }
+.dialog .df { padding: 18px 24px; background: var(--win-bg); border-top: 1px solid var(--stroke); display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.palette { width: 620px; max-width: calc(100vw - 32px); background: var(--card); border: 1px solid var(--stroke); border-radius: 8px; box-shadow: var(--shadow-dialog); overflow: hidden; animation: pop .14s ease-out; }
+.palette .pin { display: flex; align-items: center; gap: 10px; padding: 0 14px; border-bottom: 1px solid var(--stroke); }
+.palette .pin input { all: unset; flex: 1; height: 48px; font-size: 15px; color: var(--fv-text); user-select: text; }
+.palette .res { max-height: 380px; overflow-y: auto; padding: 6px; }
+.palette .grp { font-size: 12px; font-weight: 600; color: var(--fv-text-muted); padding: 8px 10px 4px; }
+.palette .opt { display: flex; align-items: center; gap: 12px; padding: 0 10px; height: 38px; border-radius: 4px; font-size: 14px; }
+.palette .opt svg.i { color: var(--fv-text-muted); } .palette .opt .s { color: var(--fv-text-subtle); font-size: 12px; margin-left: auto; white-space: nowrap; }
+.palette .opt.act { background: var(--row-sel); } .palette .foot { display: flex; gap: 14px; padding: 8px 14px; border-top: 1px solid var(--stroke); font-size: 12px; color: var(--fv-text-muted); }
+.palette .foot span { display: inline-flex; gap: 5px; align-items: center; }
+.keys { display: grid; grid-template-columns: 1fr auto; gap: 8px 24px; font-size: 13px; } .keys h4 { grid-column: 1 / -1; margin: 10px 0 0; font-size: 12px; color: var(--fv-text-muted); font-weight: 600; }
+.keys h4:first-child { margin-top: 0; } .keys span:nth-child(even) { text-align: right; }
+.flyout { position: fixed; top: 46px; right: 150px; width: 380px; background: var(--card); border: 1px solid var(--stroke); border-radius: 8px; box-shadow: var(--shadow-fly); z-index: 25; display: none; overflow: hidden; }
+.flyout.on { display: block; animation: drop .14s ease-out; } @keyframes drop { from { transform: translateY(-6px); opacity: 0; } to { transform: none; opacity: 1; } }
+.flyout .fh { display: flex; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--stroke); font-weight: 600; } .flyout .fh .sp { flex: 1; }
+.flyout .fh a { font-weight: 400; font-size: 13px; color: var(--fv-link); } .flyout .fl { max-height: 360px; overflow-y: auto; }
+.nitem { display: grid; grid-template-columns: 18px 1fr auto; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--stroke); font-size: 13px; }
+.nitem:hover { background: var(--hover); } .nitem small { display: block; color: var(--fv-text-muted); font-size: 12px; } .nitem time { font-size: 11px; color: var(--fv-text-subtle); }
+.nitem.unread b::after { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-left: 6px; vertical-align: middle; }
+.toast { position: fixed; right: 16px; bottom: 38px; width: 380px; background: var(--card); border: 1px solid var(--stroke); border-radius: 8px; box-shadow: var(--shadow-dialog); padding: 14px 16px; display: none; gap: 12px; z-index: 40; }
+.toast.on { display: flex; animation: slide .22s cubic-bezier(.1,.9,.2,1); } @keyframes slide { from { transform: translateY(16px); opacity: 0; } to { transform: none; opacity: 1; } }
+.toast img { width: 20px; height: 20px; margin-top: 2px; } .toast .tt { flex: 1; } .toast .t1 { font-size: 12px; color: var(--fv-text-muted); }
+.toast b { display: block; font-weight: 600; margin-top: 1px; } .toast .ta { align-self: center; }
+.toast .x { all: unset; align-self: flex-start; color: var(--fv-text-subtle); width: 22px; height: 22px; display: grid; place-items: center; border-radius: 4px; } .toast .x:hover { background: var(--hover); }
+
+@media (max-width: 1180px) { #p-review { grid-template-columns: 1fr; grid-template-rows: auto 1fr; } .master { border-right: 0; border-bottom: 1px solid var(--stroke); max-height: 46vh; } .lchecks { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 980px) {
+  .shell { grid-template-columns: 60px 1fr; } .account div:last-child, .navitem .lbl, .navitem .count, .navitem .hint { display: none; }
+  .account { padding: 10px 6px 12px; justify-content: center; } .avatar { width: 38px; height: 38px; } .avatar img { width: 22px; height: 22px; }
+  .page { padding: 18px 18px 36px; } .grid3, .two { grid-template-columns: 1fr; } .hero { grid-template-columns: auto 1fr; } .hero .acts { grid-column: 1 / -1; }
+  .flyout { right: 12px; } .statusbar .opt { display: none; }
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 20 20"><path d="M3.5 9 10 3.5 16.5 9v7a.5.5 0 0 1-.5.5h-3.5v-5h-5v5H4a.5.5 0 0 1-.5-.5Z"/></symbol>
+  <symbol id="i-review" viewBox="0 0 20 20"><path d="M7.5 3.5h5v2h-5zM6.5 4.5H5.5a1 1 0 0 0-1 1V16a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V5.5a1 1 0 0 0-1-1h-1"/><path d="m7.5 11.2 1.8 1.8 3.4-3.8"/></symbol>
+  <symbol id="i-file" viewBox="0 0 20 20"><path d="M5.5 2.5h6l3.5 3.5v10.5a1 1 0 0 1-1 1H5.5a1 1 0 0 1-1-1v-13a1 1 0 0 1 1-1Z"/><path d="M11.5 2.5V6H15"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 20 20"><path d="M2.5 5.5a1 1 0 0 1 1-1h4l1.5 1.5h7.5a1 1 0 0 1 1 1V15a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1Z"/></symbol>
+  <symbol id="i-verify" viewBox="0 0 20 20"><path d="M16 10a6 6 0 1 1-1.76-4.24"/><path d="M16 3.8v3.4h-3.4"/></symbol>
+  <symbol id="i-audit" viewBox="0 0 20 20"><path d="M6 3.5h8.5a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H6A1.5 1.5 0 0 1 4.5 15V5A1.5 1.5 0 0 1 6 3.5Z"/><path d="M7.5 7.5h5M7.5 10.5h5M7.5 13.5h3"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 20 20"><circle cx="10" cy="10" r="2.5"/><path d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M4.7 15.3l1.4-1.4M13.9 6.1l1.4-1.4"/></symbol>
+  <symbol id="i-search" viewBox="0 0 20 20"><circle cx="8.8" cy="8.8" r="5.3"/><path d="m12.7 12.7 4 4"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 20 20"><path d="m8 5 5 5-5 5"/></symbol>
+  <symbol id="i-back" viewBox="0 0 20 20"><path d="M16 10H4.5M9 5l-5 5 5 5"/></symbol>
+  <symbol id="i-up" viewBox="0 0 20 20"><path d="m5 12.5 5-5 5 5"/></symbol>
+  <symbol id="i-down" viewBox="0 0 20 20"><path d="m5 7.5 5 5 5-5"/></symbol>
+  <symbol id="i-ok" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7"/><path d="m7 10.2 2 2 4-4.4"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 20 20"><path d="M8.7 3.8a1.5 1.5 0 0 1 2.6 0l5.6 10a1.5 1.5 0 0 1-1.3 2.2H4.4a1.5 1.5 0 0 1-1.3-2.2Z"/><path d="M10 8v3.5M10 13.9v.1"/></symbol>
+  <symbol id="i-err" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7"/><path d="m7.6 7.6 4.8 4.8M12.4 7.6l-4.8 4.8"/></symbol>
+  <symbol id="i-info" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7"/><path d="M10 9v4.5M10 6.6v.1"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7"/><path d="M7 10h6"/></symbol>
+  <symbol id="i-hash" viewBox="0 0 20 20"><path d="M7.5 3.5 6 16.5M14 3.5l-1.5 13M4 7.5h12.5M3.5 12.5H16"/></symbol>
+  <symbol id="i-key" viewBox="0 0 20 20"><circle cx="6.5" cy="10" r="3"/><path d="M9.5 10h7.5M14.5 10v2.5M17 10v2"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 20 20"><rect x="7" y="7" width="9.5" height="9.5" rx="1.5"/><path d="M13 7V4.5a1 1 0 0 0-1-1H4.5a1 1 0 0 0-1 1V12a1 1 0 0 0 1 1H7"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 20 20"><path d="M5.5 13.5V9a4.5 4.5 0 0 1 9 0v4.5l1.5 1.5H4Z"/><path d="M8.5 17h3"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 20 20"><rect x="4.5" y="8.5" width="11" height="8" rx="1.5"/><path d="M7 8.5V6.5a3 3 0 0 1 6 0v2"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 20 20"><path d="M10 4v12M4 10h12"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 20 20"><path d="M7 5.5 4 8.5l3 3"/><path d="M4 8.5h8a4 4 0 0 1 0 8h-2"/></symbol>
+  <symbol id="i-check" viewBox="0 0 20 20"><path d="m4.5 10.5 3.5 3.5 7.5-8"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 20 20"><path d="M5 17V3.5M5 4h9l-2 3.5 2 3.5H5"/></symbol>
+  <symbol id="i-escalate" viewBox="0 0 20 20"><path d="M10 16V4M5 9l5-5 5 5"/></symbol>
+  <symbol id="i-palette" viewBox="0 0 20 20"><path d="M10 3a7 7 0 1 0 0 14c1 0 1.5-.6 1.5-1.4 0-1.2-1-1.6-1-2.6 0-.8.7-1.5 1.5-1.5h1.5A3.5 3.5 0 0 0 17 8c0-2.8-3.1-5-7-5Z"/><circle cx="6.5" cy="9" r=".8"/><circle cx="9" cy="6.3" r=".8"/><circle cx="12.4" cy="6.6" r=".8"/></symbol>
+  <symbol id="i-density" viewBox="0 0 20 20"><path d="M3.5 5h13M3.5 10h13M3.5 15h13"/></symbol>
+  <symbol id="i-keyboard" viewBox="0 0 20 20"><rect x="2.5" y="5" width="15" height="10" rx="1.5"/><path d="M5.5 8h1M8.5 8h1M11.5 8h1M14.5 8h0M6.5 12h7"/></symbol>
+  <symbol id="i-download" viewBox="0 0 20 20"><path d="M10 3.5v9M6 9l4 4 4-4M4 16.5h12"/></symbol>
+  <symbol id="i-cmd" viewBox="0 0 20 20"><path d="m5 7 3 3-3 3M10 13h5"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l2.5 2"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 20 20"><path d="M2.5 10h3l2-4 3 8 2-4h5"/></symbol>
+  <symbol id="i-min" viewBox="0 0 10 10"><path d="M0 5h10"/></symbol>
+  <symbol id="i-max" viewBox="0 0 10 10"><rect x=".5" y=".5" width="9" height="9" rx="1.5"/></symbol>
+  <symbol id="i-close" viewBox="0 0 10 10"><path d="m0 0 10 10M10 0 0 10"/></symbol>
+  <symbol id="i-x" viewBox="0 0 20 20"><path d="m5.5 5.5 9 9M14.5 5.5l-9 9"/></symbol>
+</svg>
+
+<!-- ============ TITLE BAR ============ -->
+<header class="titlebar">
+  <button class="tbbtn" id="backBtn" title="Back (Alt+Left)" aria-label="Back" disabled><svg class="i"><use href="#i-back"/></svg></button>
+  <img src="../design/logo-mark.svg" alt="" class="themed-logo">
+  <span class="name">FileVow</span>
+  <span class="sp"></span>
+  <button class="search" id="searchBtn" aria-label="Search and commands (Ctrl+K)"><svg class="i"><use href="#i-search"/></svg><span class="ellip">Search or run a command</span><kbd>Ctrl K</kbd></button>
+  <span class="sp"></span>
+  <button class="tbbtn" id="bellBtn" title="Notifications" aria-label="Notifications" aria-haspopup="true"><svg class="i"><use href="#i-bell"/></svg><span class="dot" id="bellDot"></span></button>
+  <div class="wincontrols" aria-hidden="true">
+    <button title="Minimize"><svg class="i"><use href="#i-min"/></svg></button>
+    <button title="Maximize"><svg class="i"><use href="#i-max"/></svg></button>
+    <button class="close" title="Close"><svg class="i"><use href="#i-close"/></svg></button>
+  </div>
+</header>
+
+<div class="shell">
+  <!-- ============ NAV ============ -->
+  <nav aria-label="Main">
+    <div class="account">
+      <div class="avatar"><img src="../design/logo-mark-reversed.svg" alt=""></div>
+      <div><b>Administrator</b><span><i class="live" aria-hidden="true"></i>WEB01 · agent running</span></div>
+    </div>
+    <button class="navitem sel" data-page="home"><svg class="i"><use href="#i-home"/></svg><span class="lbl">Home</span><kbd class="hint">Alt 1</kbd></button>
+    <button class="navitem" data-page="review"><svg class="i"><use href="#i-review"/></svg><span class="lbl">Review changes</span><span class="count" id="navCount">5</span><kbd class="hint">Alt 2</kbd></button>
+    <button class="navitem" data-page="files"><svg class="i"><use href="#i-file"/></svg><span class="lbl">Protected files</span><kbd class="hint">Alt 3</kbd></button>
+    <button class="navitem" data-page="folders"><svg class="i"><use href="#i-folder"/></svg><span class="lbl">Monitored folders</span><kbd class="hint">Alt 4</kbd></button>
+    <button class="navitem" data-page="runs"><svg class="i"><use href="#i-verify"/></svg><span class="lbl">Verification history</span><kbd class="hint">Alt 5</kbd></button>
+    <button class="navitem" data-page="audit"><svg class="i"><use href="#i-audit"/></svg><span class="lbl">Audit log</span><kbd class="hint">Alt 6</kbd></button>
+    <div class="grow"></div>
+    <button class="navitem" data-page="settings"><svg class="i"><use href="#i-settings"/></svg><span class="lbl">Settings</span><kbd class="hint">Alt 7</kbd></button>
+  </nav>
+
+  <main id="main">
+    <!-- ============ HOME ============ -->
+    <section class="page on" id="p-home">
+      <h1 class="ptitle">Home</h1>
+      <div class="card hero warn" id="hero">
+        <div class="badge-ic"><svg class="i" id="heroIc"><use href="#i-warn"/></svg></div>
+        <div>
+          <h1 id="heroTitle">Action needed</h1>
+          <p id="heroText"></p>
+          <div class="facts">
+            <span><svg class="i"><use href="#i-clock"/></svg>Last check <b id="fLast">2 min ago</b></span>
+            <span><svg class="i"><use href="#i-verify"/></svg>Next check in <b id="fNext">13:00</b></span>
+            <span><svg class="i"><use href="#i-heart"/></svg>Agent heartbeat <b id="fBeat">4 s ago</b></span>
+          </div>
+          <div class="progress" id="prog"><div></div></div>
+        </div>
+        <div class="acts">
+          <button class="btn" id="verifyBtn" title="Verify all files now (Ctrl+Shift+V)"><svg class="i"><use href="#i-verify"/></svg>Verify now</button>
+          <button class="btn primary" id="heroReview" data-goto="review">Review changes</button>
+        </div>
+      </div>
+
+      <h2 class="sec">Verification layers</h2>
+      <div class="grid3">
+        <div class="card layer"><div class="top"><svg class="i"><use href="#i-hash"/></svg>File contents</div><div class="n" id="l1n"></div><div class="subtle">SHA-256 fingerprints match</div><div class="st" id="l1s"></div></div>
+        <div class="card layer"><div class="top"><svg class="i"><use href="#i-key"/></svg>Signatures</div><div class="n" id="l2n"></div><div class="subtle">RSA-3072 records verified</div><div class="st" id="l2s"></div></div>
+        <div class="card layer"><div class="top"><svg class="i"><use href="#i-lock"/></svg>Mirror vault</div><div class="n">1,284 / 1,284</div><div class="subtle">Encrypted copies intact</div><div class="st"><svg class="i"><use href="#i-ok"/></svg><span>All copies verified</span></div></div>
+      </div>
+
+      <div class="card spark" style="margin-top:8px">
+        <div class="hd"><b>Last 24 hours</b><span class="subtle" id="sparkSum"></span><span class="sp"></span><span class="subtle">Each bar is one 15-minute verification run</span></div>
+        <div class="bars" id="bars" role="img" aria-label="Verification runs in the last 24 hours"></div>
+        <div class="axis"><span>24 h ago</span><span>18 h</span><span>12 h</span><span>6 h</span><span>Now</span></div>
+      </div>
+
+      <div class="two">
+        <div><h2 class="sec">Needs attention<span class="sp"></span><a data-goto="review">Open review queue</a></h2><div id="homeList"></div></div>
+        <div><h2 class="sec">Recent activity<span class="sp"></span><a data-goto="audit">Audit log</a></h2><div class="card timeline" id="timeline"></div></div>
+      </div>
+    </section>
+
+    <!-- ============ REVIEW (master-detail) ============ -->
+    <section class="page full" id="p-review">
+      <div class="master">
+        <div class="mh">
+          <h1 class="ptitle">Review changes</h1>
+          <div class="infield"><svg class="i"><use href="#i-search"/></svg><input class="txtin" id="qFilter" placeholder="Filter by file or folder" aria-label="Filter changes"><kbd>/</kbd></div>
+          <div class="chips" id="chips" role="group" aria-label="Severity filter"></div>
+          <select class="sel" id="groupSel" aria-label="Group by" style="width:100%"><option value="sev">Group by severity</option><option value="folder">Group by folder</option><option value="none">No grouping (newest first)</option></select>
+        </div>
+        <div class="bulk" id="bulk" role="region" aria-label="Bulk actions">
+          <b id="bulkN">0 selected</b><span class="sp"></span>
+          <button class="btn primary" id="bAccept">Accept</button><button class="btn" id="bRestore">Restore</button><button class="btn subtle" id="bClear" title="Clear selection">Clear</button>
+        </div>
+        <div class="list" id="list" role="listbox" aria-label="Pending changes"></div>
+      </div>
+      <div class="detail" id="detail"><div class="inner" id="dInner"></div></div>
+    </section>
+
+    <!-- ============ FILES ============ -->
+    <section class="page" id="p-files">
+      <h1 class="ptitle">Protected files</h1>
+      <div class="cmdbar">
+        <div class="infield" style="width:340px"><svg class="i"><use href="#i-search"/></svg><input class="txtin" id="fFilter" placeholder="Filter files"></div>
+        <select class="sel" id="fStatus"><option value="">All statuses</option><option value="ok">Verified</option><option value="chg">Needs review</option></select>
+        <span class="sp"></span><span class="subtle" id="fCount"></span>
+      </div>
+      <div class="table files" id="filesTable"></div>
+    </section>
+
+    <!-- ============ FOLDERS ============ -->
+    <section class="page" id="p-folders">
+      <h1 class="ptitle">Monitored folders<span class="sp"></span><button class="btn primary"><svg class="i"><use href="#i-plus"/></svg>Add folder</button></h1>
+      <div class="row"><svg class="i"><use href="#i-folder"/></svg><div class="txt"><b class="mono" style="font-size:13.5px">C:\inetpub\wwwroot</b><span>1,262 files · includes subfolders · excludes *.log, *.tmp · baseline 12 Nov 2026</span></div>
+        <select class="sel" aria-label="Severity"><option>High</option><option>Critical</option><option>Medium</option></select><label class="toggle"><input type="checkbox" checked aria-label="Monitoring enabled"></label></div>
+      <div class="row"><svg class="i"><use href="#i-folder"/></svg><div class="txt"><b class="mono" style="font-size:13.5px">C:\Windows\System32\drivers\etc</b><span>6 files · hosts, networks, protocol, services · baseline 12 Nov 2026</span></div>
+        <select class="sel" aria-label="Severity"><option>Critical</option><option>High</option></select><label class="toggle"><input type="checkbox" checked aria-label="Monitoring enabled"></label></div>
+      <div class="row"><svg class="i"><use href="#i-folder"/></svg><div class="txt"><b class="mono" style="font-size:13.5px">C:\FileVow</b><span>16 files · FileVow protects its own code and configuration · always on</span></div>
+        <select class="sel" aria-label="Severity"><option>Critical</option></select><label class="toggle"><input type="checkbox" checked disabled aria-label="Monitoring enabled"></label></div>
+    </section>
+
+    <!-- ============ RUNS ============ -->
+    <section class="page" id="p-runs">
+      <h1 class="ptitle">Verification history<span class="sp"></span><button class="btn" data-action="verify"><svg class="i"><use href="#i-verify"/></svg>Verify now</button></h1>
+      <div class="row"><svg class="i"><use href="#i-clock"/></svg><div class="txt"><b>Schedule</b><span>Every 15 minutes, plus at start-up. Each report is signed with the agent key.</span></div><select class="sel" aria-label="Schedule"><option>Every 15 minutes</option></select></div>
+      <div class="card chart"><div class="hd" style="display:flex;gap:10px;align-items:baseline"><b style="font-weight:600">Run duration</b><span class="subtle">last 24 runs · seconds</span></div><svg id="durChart" viewBox="0 0 600 90" preserveAspectRatio="none" role="img" aria-label="Run duration chart"></svg></div>
+      <h2 class="sec">Recent runs</h2>
+      <div class="table runs" id="runsTable"></div>
+    </section>
+
+    <!-- ============ AUDIT ============ -->
+    <section class="page" id="p-audit">
+      <h1 class="ptitle">Audit log</h1>
+      <div class="cmdbar">
+        <button class="btn" id="chainBtn"><svg class="i"><use href="#i-lock"/></svg>Verify chain</button>
+        <select class="sel" id="aType"><option value="">All actions</option><option value="change">Change decisions</option><option value="auth">Sign-ins</option><option value="system">System</option></select>
+        <span class="sp"></span><button class="btn" id="exportBtn"><svg class="i"><use href="#i-download"/></svg>Export CSV</button>
+      </div>
+      <div id="chainRes"></div>
+      <div class="table audit" id="auditTable"></div>
+    </section>
+
+    <!-- ============ SETTINGS ============ -->
+    <section class="page" id="p-settings">
+      <h1 class="ptitle">Settings</h1>
+      <h2 class="sec" style="margin-top:0">Security</h2>
+      <div class="row"><svg class="i"><use href="#i-key"/></svg><div class="txt"><b>Baseline signing key</b><span class="mono" style="font-size:12px">RSA-3072 · a1b2c3d4e5f60718 9c2e44b1d07a3f65</span></div><button class="copy" data-copy="a1b2c3d4e5f607189c2e44b1d07a3f65" title="Copy fingerprint"><svg class="i"><use href="#i-copy"/></svg></button><button class="btn">Rotate key</button></div>
+      <div class="row"><svg class="i"><use href="#i-lock"/></svg><div class="txt"><b>Two-step verification</b><span>Authenticator codes are required to sign in and to accept or restore changes</span></div><span class="pill ok"><svg class="i"><use href="#i-check"/></svg>On</span></div>
+      <h2 class="sec">Notifications</h2>
+      <div class="row"><svg class="i"><use href="#i-bell"/></svg><div class="txt"><b>Windows notifications</b><span>Show a notification for high and critical changes</span></div><label class="toggle"><span class="muted">On</span><input type="checkbox" checked></label></div>
+      <div class="row"><svg class="i"><use href="#i-bell"/></svg><div class="txt"><b>Email alerts</b><span>security-team@example.com · critical and high</span></div><button class="btn">Edit</button></div>
+      <h2 class="sec">Appearance and accessibility</h2>
+      <div class="row"><svg class="i"><use href="#i-palette"/></svg><div class="txt"><b>App theme</b><span>Follow Windows, or choose light or dark</span></div>
+        <select class="sel" id="themeSel" aria-label="App theme"><option value="system">Use system setting</option><option value="light">Light</option><option value="dark">Dark</option></select></div>
+      <div class="row"><svg class="i"><use href="#i-density"/></svg><div class="txt"><b>Density</b><span>Compact shows more rows at once on smaller screens</span></div>
+        <select class="sel" id="densSel" aria-label="Density"><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></div>
+      <div class="row click" data-action="keys"><svg class="i"><use href="#i-keyboard"/></svg><div class="txt"><b>Keyboard shortcuts</b><span>See every shortcut · press ? anywhere</span></div><svg class="i chev"><use href="#i-chev"/></svg></div>
+      <h2 class="sec">About</h2>
+      <div class="row"><img src="../design/logo-mark.svg" alt="" class="themed-logo" style="width:20px;height:20px"><div class="txt"><b>FileVow 1.0</b><span>Three-layer file integrity monitoring · SHA-256 · RSA-PSS · AES-256-GCM</span></div></div>
+    </section>
+  </main>
+</div>
+
+<!-- ============ STATUS BAR ============ -->
+<footer class="statusbar" aria-label="Status">
+  <span class="it"><i class="live" aria-hidden="true"></i>Agent running</span>
+  <span class="it click" data-goto="runs" id="sbRun">Last run 10:30 · 9.4 s</span>
+  <span class="it" id="sbNext">Next in 13:00</span>
+  <span class="it click opt" data-goto="settings"><svg class="i"><use href="#i-key"/></svg>Key a1b2c3d4</span>
+  <span class="it click opt ok" data-goto="audit"><svg class="i"><use href="#i-lock"/></svg>Audit chain intact</span>
+  <span class="sp"></span>
+  <span class="it click" data-action="palette"><kbd>Ctrl K</kbd> Commands</span>
+  <span class="it click" data-action="keys"><kbd>?</kbd> Shortcuts</span>
+</footer>
+
+<!-- ============ OVERLAYS ============ -->
+<div class="scrim" id="dlgScrim" role="dialog" aria-modal="true" aria-labelledby="dlgTitle">
+  <div class="dialog">
+    <div class="db">
+      <h3 id="dlgTitle"><img src="../design/logo-mark.svg" alt="" class="themed-logo">Confirm it's you</h3>
+      <p id="dlgText"></p>
+      <div class="summary" id="dlgSum"></div>
+      <div class="field" data-f="pw"><label for="f1">Password</label><input id="f1" type="password" autocomplete="current-password"><div class="msg">Enter your password.</div></div>
+      <div class="field" data-f="otp"><label for="f2">Authenticator code</label><input id="f2" inputmode="numeric" maxlength="6" placeholder="6-digit code" autocomplete="one-time-code"><div class="msg">Enter the 6-digit code from your authenticator app.</div></div>
+      <div class="field" data-f="key" id="fKey"><label for="f3">Signing-key passphrase</label><input id="f3" type="password"><div class="msg">The passphrase unlocks your baseline signing key.</div></div>
+      <div class="field" data-f="why"><label for="f4">Reason (saved in the audit log)</label><input id="f4" placeholder="Release 2.4 deployment, ticket CHG-1182"><div class="msg">A reason is required for every decision.</div></div>
+    </div>
+    <div class="df"><button class="btn primary" id="dlgOk">Accept</button><button class="btn" id="dlgCancel">Cancel</button></div>
+  </div>
+</div>
+
+<div class="scrim top" id="palScrim" role="dialog" aria-modal="true" aria-label="Command palette">
+  <div class="palette">
+    <div class="pin"><svg class="i"><use href="#i-search"/></svg><input id="palIn" placeholder="Type a file, page, setting or command" aria-label="Search" autocomplete="off"><kbd>Esc</kbd></div>
+    <div class="res" id="palRes" role="listbox"></div>
+    <div class="foot"><span><kbd>↑</kbd><kbd>↓</kbd> move</span><span><kbd>Enter</kbd> open</span><span><kbd>Esc</kbd> close</span></div>
+  </div>
+</div>
+
+<div class="scrim" id="keyScrim" role="dialog" aria-modal="true" aria-labelledby="keyTitle">
+  <div class="dialog" style="width:560px">
+    <div class="db">
+      <h3 id="keyTitle">Keyboard shortcuts</h3>
+      <div class="keys">
+        <h4>Anywhere</h4>
+        <span>Search and commands</span><span><kbd>Ctrl</kbd> <kbd>K</kbd></span>
+        <span>Go to a page</span><span><kbd>Alt</kbd> <kbd>1</kbd>–<kbd>7</kbd></span>
+        <span>Back</span><span><kbd>Alt</kbd> <kbd>←</kbd></span>
+        <span>Verify all files now</span><span><kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>V</kbd></span>
+        <span>Show this list</span><span><kbd>?</kbd></span>
+        <h4>Review changes</h4>
+        <span>Next / previous change</span><span><kbd>J</kbd> <kbd>K</kbd> or <kbd>↓</kbd> <kbd>↑</kbd></span>
+        <span>Select for bulk action</span><span><kbd>X</kbd></span>
+        <span>Filter the list</span><span><kbd>/</kbd></span>
+        <span>Accept change</span><span><kbd>A</kbd></span>
+        <span>Restore approved version</span><span><kbd>R</kbd></span>
+        <span>Mark as false positive</span><span><kbd>F</kbd></span>
+        <span>Escalate</span><span><kbd>E</kbd></span>
+        <span>Copy observed hash</span><span><kbd>C</kbd></span>
+      </div>
+    </div>
+    <div class="df" style="grid-template-columns:1fr"><button class="btn" id="keyClose">Close</button></div>
+  </div>
+</div>
+
+<div class="flyout" id="flyout" role="dialog" aria-label="Notifications">
+  <div class="fh">Notifications<span class="sp"></span><a href="#" id="markRead">Mark all as read</a></div>
+  <div class="fl" id="flList"></div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <img src="../design/favicon.svg" alt="">
+  <div class="tt"><div class="t1">FileVow</div><b id="toastTitle"></b><div class="muted" id="toastText" style="font-size:13px"></div></div>
+  <button class="btn ta" id="toastAct" style="display:none"></button>
+  <button class="x" id="toastX" aria-label="Dismiss"><svg class="i" style="width:12px;height:12px"><use href="#i-x"/></svg></button>
+</div>
+
+<script>
+/* ===================================================================== data
+   Demo data only. Kept deliberately harmless: realistic malware strings
+   would be quarantined by antivirus software. */
+const NOW = Date.now(), MIN = 60000;
+const H = s => s;  // full SHA-256 values below are illustrative
+const changes = [
+  { id: 921, file: "config.php", folder: "C:\\inetpub\\wwwroot", path: "C:\\inetpub\\wwwroot\\config.php", sev: "crit", type: "Record tampered",
+    detail: "Stored fingerprint was edited; RSA signature no longer verifies", at: NOW - 2 * MIN, ver: 6,
+    exp: H("4be1f0a93c7d2e61b5a8094f3c2d7e18a6b0f4c95e21d837a0c6f2b19e4d6d02"), obs: H("7c21d8e4b05f9a36c1e2d7084b93fa5c6e10d2b8f47a39c5e0618d2b7af4e9f0"),
+    size: ["2,048 B", "2,060 B"], layers: { sig: false, mirror: true, content: false, meta: true },
+    diff: [["<?php", "<?php"], ["$db_host = 'localhost';", "$db_host = '203.0.113.50';", "mod"], ["$db_user = 'app';", "$db_user = 'app';"], ["$db_name = 'shop';", "$db_name = 'shop';"], ["define('DEBUG', false);", "define('DEBUG', false);"]] },
+  { id: 918, file: "index.html", folder: "C:\\inetpub\\wwwroot", path: "C:\\inetpub\\wwwroot\\index.html", sev: "high", type: "File modified",
+    detail: "Content no longer matches the approved SHA-256 fingerprint", at: NOW - 3 * MIN, ver: 3,
+    exp: H("9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"), obs: H("a1c3e5f7d9024b6e8c1a3f5d7b9e0c24d6f8a0b2c4e6f8a1b3d5f7e9c0a277b2"),
+    size: ["5,120 B", "5,388 B"], layers: { sig: true, mirror: true, content: false, meta: true },
+    diff: [["<!doctype html>", "<!doctype html>"], ["<html lang=\"en\">", "<html lang=\"en\">"], ["<head>", "<head>"], ["  <meta charset=\"utf-8\">", "  <meta charset=\"utf-8\">"], ["  <title>Welcome</title>", "  <title>Welcome</title>"],
+           [null, "  <link rel=\"preconnect\" href=\"https://stats.example.net\">", "add"], ["</head>", "</head>"], ["<body>", "<body>"], ["  <header class=\"top\"></header>", "  <header class=\"top\"></header>"],
+           ["  <h1>Hello</h1>", "  <h1>Hello, visitor</h1>", "mod"], ["  <p>Our latest offers.</p>", "  <p>Our latest offers.</p>"], ["</body>", "</body>"], ["</html>", "</html>"]] },
+  { id: 919, file: "app.js", folder: "C:\\inetpub\\wwwroot\\js", path: "C:\\inetpub\\wwwroot\\js\\app.js", sev: "high", type: "File modified",
+    detail: "Content no longer matches the approved SHA-256 fingerprint", at: NOW - 3 * MIN, ver: 8,
+    exp: H("5d0e2c91aa3f6b84e27d150c9fa86e3b4d71c20a95e8f3b6d4c1a7e0b2f91a4c"), obs: H("e8b7f1d0344a9c2e6b1f8d3a5c7e9b0d2f4a6c8e1b3d5f7a9c0e2b4d6f8a92cd"),
+    size: ["14,880 B", "14,902 B"], layers: { sig: true, mirror: true, content: false, meta: true },
+    diff: [["import { loadMenu } from './menu.js';", "import { loadMenu } from './menu.js';"], ["", ""], ["export function init() {", "export function init() {"], ["  loadMenu();", "  loadMenu();"],
+           ["  trackPage();", null, "del"], [null, "  trackPage({ anon: true });", "add"], ["}", "}"]] },
+  { id: 920, file: "report.php", folder: "C:\\inetpub\\wwwroot\\uploads", path: "C:\\inetpub\\wwwroot\\uploads\\report.php", sev: "high", type: "Unknown file created",
+    detail: "New script file in a monitored folder, not part of any approved release", at: NOW - 4 * MIN, ver: 0,
+    exp: null, obs: H("f00dbab3c4e5a6b7c8d9e0f1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b311e7"),
+    size: [null, "862 B"], layers: { sig: null, mirror: null, content: false, meta: null },
+    diff: [[null, "<?php // uploaded at 10:29, 862 bytes, not in any approved release", "add"]] },
+  { id: 922, file: "hosts", folder: "C:\\Windows\\System32\\drivers\\etc", path: "C:\\Windows\\System32\\drivers\\etc\\hosts", sev: "med", type: "Permissions changed",
+    detail: "Content unchanged; the file's access list now lets Everyone modify it", at: NOW - 26 * MIN, ver: 2,
+    exp: H("7d5c9e2b4a6f8c1e3d5b7a9f0c2e4d6b8a1c3e5f7d9b0a2c4e6f8d1b3a5cf3a1"), obs: H("7d5c9e2b4a6f8c1e3d5b7a9f0c2e4d6b8a1c3e5f7d9b0a2c4e6f8d1b3a5cf3a1"),
+    size: ["824 B", "824 B"], layers: { sig: true, mirror: true, content: true, meta: false },
+    meta: ["Everyone: Read", "Everyone: Modify"], diff: [] },
+];
+const SEV = { crit: { label: "Critical", icon: "err", order: 0 }, high: { label: "High", icon: "warn", order: 1 }, med: { label: "Medium", icon: "info", order: 2 } };
+const audit = [
+  { at: NOW - 2 * MIN, t: "system", a: "Record tampered", target: "wwwroot\\config.php", by: "System", h: "0c9a14e2" },
+  { at: NOW - 3 * MIN, t: "system", a: "Verification run #4182", target: "1,284 files · 5 issues", by: "System", h: "52bd77a1" },
+  { at: NOW - 81 * MIN, t: "auth", a: "Signed in", target: "127.0.0.1 · with authenticator", by: "Administrator", h: "c91e03f4" },
+  { at: NOW - 17 * 60 * MIN, t: "change", a: "Change accepted", target: "wwwroot\\js\\menu.js · v4", by: "Administrator", h: "7a3f58c0" },
+  { at: NOW - 17 * 60 * MIN - MIN, t: "auth", a: "Signed in", target: "127.0.0.1 · with authenticator", by: "Administrator", h: "19be2d77" },
+  { at: NOW - 26 * 60 * MIN, t: "change", a: "File restored", target: "wwwroot\\about.html · v5", by: "Administrator", h: "e40b9a12" },
+];
+const files = [
+  ["C:\\inetpub\\wwwroot\\about.html", "9f86d0", "0a08"], ["C:\\inetpub\\wwwroot\\contact.html", "3b1e44", "c71d"], ["C:\\inetpub\\wwwroot\\css\\site.css", "c08f2a", "91be"],
+  ["C:\\inetpub\\wwwroot\\web.config", "e41d77", "02aa"], ["C:\\inetpub\\wwwroot\\js\\menu.js", "6a0c3e", "d41b"], ["C:\\inetpub\\wwwroot\\img\\logo.png", "b7e211", "5c09"],
+  ["C:\\Windows\\System32\\drivers\\etc\\networks", "0ff3a2", "77e1"], ["C:\\Windows\\System32\\drivers\\etc\\services", "2c8d90", "aa13"], ["C:\\FileVow\\config\\config.yaml", "aa20b5", "6e19"],
+];
+
+/* ===================================================================== state */
+let state = { page: "home", hist: [], sel: null, checked: new Set(), sevFilter: "all", q: "", group: "sev", diffMode: "split", onlyChanges: false,
+              lastRun: NOW - 2 * MIN, unread: new Set(changes.map(c => c.id)), dlg: null, palIdx: 0, palItems: [] };
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const ic = (id, cls = "i") => `<svg class="${cls}"><use href="#i-${id}"/></svg>`;
+const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+const fmtNum = n => n.toLocaleString("en-US");
+function ago(t) { const s = Math.max(0, Math.round((Date.now() - t) / 1000)); if (s < 60) return s + " s ago"; const m = Math.round(s / 60); if (m < 60) return m + " min ago";
+  const h = Math.round(m / 60); return h < 24 ? h + " h ago" : Math.round(h / 24) + " d ago"; }
+const clock = t => new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+const short = h => h ? h.slice(0, 8) + "…" + h.slice(-4) : "—";
+const sevIcon = s => ic(SEV[s].icon, "i sev " + s);
+
+/* ===================================================================== navigation */
+function go(page, push = true) {
+  if (page === state.page && push) { focusMain(); return; }
+  if (push) state.hist.push(state.page);
+  state.page = page;
+  $$(".page").forEach(p => p.classList.toggle("on", p.id === "p-" + page));
+  $$(".navitem").forEach(b => { const on = b.dataset.page === page; b.classList.toggle("sel", on); b.setAttribute("aria-current", on ? "page" : "false"); });
+  $("#backBtn").disabled = !state.hist.length;
+  $("#main").scrollTop = 0;
+  if (page === "review") { if (!state.sel || !changes.find(c => c.id === state.sel)) state.sel = visible()[0]?.id ?? null; renderReview(); }
+  closeFly();
+}
+function back() { if (!state.hist.length) return; go(state.hist.pop(), false); $("#backBtn").disabled = !state.hist.length; }
+function focusMain() { $("#main").scrollTop = 0; }
+
+/* ===================================================================== home */
+function renderHome() {
+  const n = changes.length, crit = changes.filter(c => c.sev === "crit").length;
+  const hero = $("#hero");
+  if (n) {
+    hero.className = "card hero warn"; $("#heroIc").innerHTML = `<use href="#i-warn"/>`; $("#heroTitle").textContent = "Action needed";
+    $("#heroText").textContent = (crit ? `${crit} critical issue${crit > 1 ? "s" : ""} and ` : "") + `${n - crit} change${n - crit === 1 ? "" : "s"} waiting for your review.`;
+    $("#heroReview").style.display = "";
+  } else {
+    hero.className = "card hero ok"; $("#heroIc").innerHTML = `<use href="#i-ok"/>`; $("#heroTitle").textContent = "Your files are protected";
+    $("#heroText").textContent = "All 1,284 files match their signed, approved versions."; $("#heroReview").style.display = "none";
+  }
+  const contentBad = changes.filter(c => c.layers.content === false).length, sigBad = changes.filter(c => c.layers.sig === false).length;
+  $("#l1n").textContent = `${fmtNum(1284 - contentBad)} / 1,284`;
+  $("#l1s").className = "st" + (contentBad ? " bad" : ""); $("#l1s").innerHTML = contentBad ? `${ic("warn")}<span>${contentBad} file${contentBad > 1 ? "s" : ""} differ</span>` : `${ic("ok")}<span>All fingerprints match</span>`;
+  $("#l2n").textContent = `${fmtNum(1284 - sigBad)} / 1,284`;
+  $("#l2s").className = "st" + (sigBad ? " bad" : ""); $("#l2s").innerHTML = sigBad ? `${ic("err")}<span>${sigBad} record tampered</span>` : `${ic("ok")}<span>All signatures valid</span>`;
+  const top = [...changes].sort((a, b) => SEV[a.sev].order - SEV[b.sev].order).slice(0, 3);
+  $("#homeList").innerHTML = n ? top.map(c => `<div class="row click" data-open="${c.id}" tabindex="0">${sevIcon(c.sev)}<div class="txt"><b>${c.type} — <span class="mono" style="display:inline;font-size:13px;color:var(--fv-text)">${esc(c.file)}</span></b><span>${esc(c.detail)}</span></div><span class="meta" title="${clock(c.at)}">${ago(c.at)}</span>${ic("chev", "i chev")}</div>`).join("")
+    + (n > 3 ? `<div class="row click" data-goto="review" style="min-height:44px">${ic("review")}<div class="txt"><b>${n - 3} more waiting</b></div>${ic("chev", "i chev")}</div>` : "")
+    : `<div class="row">${ic("ok", "i sev ok")}<div class="txt"><b>Nothing needs your attention</b><span>Every protected file matches its signed, approved version</span></div></div>`;
+  $("#timeline").innerHTML = audit.slice(0, 5).map(e => `<div class="tl"><i class="d ${e.t === "change" ? "ok" : e.a.includes("tampered") ? "crit" : e.t === "auth" ? "info" : ""}"></i><div>${esc(e.a)}<small>${esc(e.target)} · ${esc(e.by)}</small></div><time title="${new Date(e.at).toLocaleString()}">${ago(e.at)}</time></div>`).join("");
+  const nc = $("#navCount"); nc.textContent = n; nc.style.display = n ? "" : "none"; nc.className = "count" + (crit ? "" : " amber");
+  renderBell();
+}
+function renderBars() {
+  const bars = []; for (let i = 0; i < 96; i++) bars.push(i === 95 ? (changes.length ? "bad" : "") : i === 41 ? "gap" : "");
+  $("#bars").innerHTML = bars.map((c, i) => `<i class="${c}" title="${c === "gap" ? "Missed run (agent restarted)" : c === "bad" ? "Issues found" : "No changes"} · ${clock(NOW - (95 - i) * 15 * MIN)}"></i>`).join("");
+  $("#sparkSum").textContent = `· 96 runs · ${changes.length ? 1 : 0} with issues · 1 missed during restart · average 9.2 s`;
+}
+
+/* ===================================================================== review */
+function visible() {
+  const q = state.q.toLowerCase();
+  return changes.filter(c => (state.sevFilter === "all" || c.sev === state.sevFilter) && (!q || c.path.toLowerCase().includes(q) || c.type.toLowerCase().includes(q)))
+    .sort((a, b) => state.group === "none" ? b.at - a.at : state.group === "folder" ? a.folder.localeCompare(b.folder) || b.at - a.at : SEV[a.sev].order - SEV[b.sev].order || b.at - a.at);
+}
+function renderChips() {
+  const cnt = s => changes.filter(c => s === "all" || c.sev === s).length;
+  const dot = { crit: "var(--fv-critical)", high: "var(--fv-pending)", med: "var(--fv-link)" };
+  $("#chips").innerHTML = ["all", "crit", "high", "med"].map(s => `<button class="chip ${state.sevFilter === s ? "on" : ""}" data-sev="${s}" aria-pressed="${state.sevFilter === s}">${s !== "all" ? `<i class="d" style="background:${dot[s]}"></i>` : ""}${s === "all" ? "All" : SEV[s].label}<b>${cnt(s)}</b></button>`).join("");
+}
+function renderList() {
+  const v = visible(), el = $("#list");
+  if (!changes.length) { el.innerHTML = `<div class="empty"><div class="ic">${ic("ok")}</div><b>You're all caught up</b>No changes are waiting for review.</div>`; return; }
+  if (!v.length) { el.innerHTML = `<div class="empty" style="padding-top:28px"><b>No matches</b>Try a different filter.</div>`; return; }
+  let html = "", last = null;
+  v.forEach(c => {
+    const g = state.group === "sev" ? SEV[c.sev].label : state.group === "folder" ? c.folder : null;
+    if (g !== null && g !== last) { html += `<div class="lgroup">${esc(g)}<span class="subtle">${v.filter(x => (state.group === "sev" ? SEV[x.sev].label : x.folder) === g).length}</span></div>`; last = g; }
+    html += `<div class="lrow ${state.sel === c.id ? "sel" : ""}" data-sel="${c.id}" role="option" aria-selected="${state.sel === c.id}" tabindex="${state.sel === c.id ? 0 : -1}">
+      <input type="checkbox" data-check="${c.id}" ${state.checked.has(c.id) ? "checked" : ""} aria-label="Select ${esc(c.file)}">${sevIcon(c.sev)}
+      <div class="t"><b>${esc(c.file)}</b><span>${c.type} · ${esc(c.folder.replace("C:\\", ""))}</span></div><time title="${clock(c.at)}">${ago(c.at).replace(" ago", "")}</time></div>`;
+  });
+  el.innerHTML = html;
+}
+function renderBulk() {
+  const n = state.checked.size; $("#bulk").classList.toggle("on", n > 0); $("#bulkN").textContent = `${n} selected`;
+  const restorable = [...state.checked].filter(id => changes.find(c => c.id === id)?.ver > 0).length;
+  $("#bRestore").disabled = !restorable; $("#bRestore").textContent = restorable && restorable < n ? `Restore ${restorable}` : "Restore";
+}
+function layerChip(name, sub, v, failText) {
+  const st = v === true ? "pass" : v === false ? "fail" : "na";
+  return `<div class="lc ${st}">${ic(v === true ? "ok" : v === false ? "err" : "minus")}<div><b>${name}</b><span>${v === true ? sub : v === false ? failText : "Not applicable"}</span></div></div>`;
+}
+function hashCell(h, bad) { return h ? `<div class="mono hash ${bad ? "bad" : ""}"><span><b>${h.slice(0, 8)}</b>${h.slice(8)}</span></div>` : `<div class="muted">—</div>`; }
+function wordMark(a, b) {
+  let p = 0; while (p < a.length && p < b.length && a[p] === b[p]) p++;
+  let s = 0; while (s < a.length - p && s < b.length - p && a[a.length - 1 - s] === b[b.length - 1 - s]) s++;
+  const m = (x) => esc(x.slice(0, p)) + "<mark>" + esc(x.slice(p, x.length - s)) + "</mark>" + esc(x.slice(x.length - s));
+  return [m(a), m(b)];
+}
+function renderDiff(c) {
+  if (!c.diff.length) return `<div class="diff"><div class="metachg">${ic("info")} Only file metadata changed. Content is identical to approved version ${c.ver}.</div></div>`;
+  const rows = c.diff.map(([o, n, k]) => { k = k || "same"; if (k === "mod") { const [mo, mn] = wordMark(o, n); return { o, n, k, mo, mn }; } return { o, n, k, mo: o === null ? null : esc(o), mn: n === null ? null : esc(n) }; });
+  const blocks = []; let run = [];
+  rows.forEach(r => { if (state.onlyChanges && r.k === "same") run.push(r); else { if (run.length) blocks.push({ fold: run }); run = []; blocks.push(r); } });
+  if (run.length) blocks.push({ fold: run });
+  let a = 1, b = 1;
+  if (state.diffMode === "split") {
+    const L = [], R = [];
+    blocks.forEach(r => {
+      if (r.fold) { a += r.fold.length; b += r.fold.length; const f = `<div class="ln fold">${r.fold.length} unchanged line${r.fold.length > 1 ? "s" : ""}</div>`; L.push(f); R.push(f); return; }
+      L.push(r.o === null ? `<div class="ln empty"><i></i><span></span></div>` : `<div class="ln ${r.k === "del" || r.k === "mod" ? "del" : ""}"><i>${a++}</i><span>${r.mo}</span></div>`);
+      R.push(r.n === null ? `<div class="ln empty"><i></i><span></span></div>` : `<div class="ln ${r.k === "add" || r.k === "mod" ? "add" : ""}"><i>${b++}</i><span>${r.mn}</span></div>`);
+    });
+    return `<div class="diff"><div class="hd"><div>Approved version ${c.ver || "—"} · from the mirror vault</div><div>Now on disk · saved as evidence</div></div><div class="body"><div class="col">${L.join("")}</div><div class="col">${R.join("")}</div></div></div>`;
+  }
+  const U = [];
+  blocks.forEach(r => {
+    if (r.fold) { a += r.fold.length; b += r.fold.length; U.push(`<div class="ln fold">${r.fold.length} unchanged line${r.fold.length > 1 ? "s" : ""}</div>`); return; }
+    if (r.k === "same") { U.push(`<div class="ln"><i>${a++}</i><i>${b++}</i><u> </u><span>${r.mo}</span></div>`); return; }
+    if (r.o !== null) U.push(`<div class="ln del"><i>${a++}</i><i></i><u>−</u><span>${r.mo}</span></div>`);
+    if (r.n !== null) U.push(`<div class="ln add"><i></i><i>${b++}</i><u>+</u><span>${r.mn}</span></div>`);
+  });
+  return `<div class="diff uni"><div class="hd"><div>Approved version ${c.ver || "—"} → now on disk</div></div><div class="body"><div class="col">${U.join("")}</div></div></div>`;
+}
+function renderDetail() {
+  const c = changes.find(x => x.id === state.sel), el = $("#dInner");
+  if (!c) { el.innerHTML = changes.length ? `<div class="empty">Select a change to see its details.</div>` : `<div class="empty"><div class="ic">${ic("ok")}</div><b>Every file matches its approved version</b>New changes will appear here as soon as they are detected.</div>`; return; }
+  const v = visible(), idx = v.findIndex(x => x.id === c.id);
+  const info = { crit: ["crit", "err", "The integrity record was altered.", "Someone changed the stored fingerprint in the database. The approved copy is safe in the vault."],
+                 high: ["warn", "warn", c.ver ? "This file changed since it was approved." : "A file appeared that was never approved.", c.ver ? "Compare it with the approved copy, then accept it if expected or restore the approved version." : "Approve it to start protecting it, or escalate if nobody expected it."],
+                 med: ["info", "info", "Only the file's permissions changed.", "The content still matches. Check whether the new access rights were intended."] }[c.sev];
+  const adds = c.diff.filter(d => d[2] === "add" || d[2] === "mod").length, dels = c.diff.filter(d => d[2] === "del" || d[2] === "mod").length;
+  el.innerHTML = `
+    <div class="dhead"><div class="t"><h1>${esc(c.file)}</h1><div class="path"><span class="mono" style="font-size:12px">${esc(c.path)}</span><button class="copy" data-copy="${esc(c.path)}" title="Copy path">${ic("copy")}</button></div></div>
+      <span class="pill ${c.sev}">${ic(SEV[c.sev].icon)}${SEV[c.sev].label}</span></div>
+    <div class="toolbar" role="toolbar" aria-label="Decision">
+      <button class="btn primary" data-act="accept" title="Accept (A)">${ic("check")}${c.ver ? "Accept" : "Approve and protect"}<kbd>A</kbd></button>
+      ${c.ver ? `<button class="btn" data-act="restore" title="Restore approved version (R)">${ic("undo")}Restore v${c.ver}<kbd>R</kbd></button>` : ""}
+      <button class="btn" data-act="reject" title="Mark as false positive (F)">${ic("flag")}False positive<kbd>F</kbd></button>
+      <button class="btn danger" data-act="escalate" title="Escalate (E)">${ic("escalate")}Escalate<kbd>E</kbd></button>
+      <span class="sp"></span><span class="subtle">${idx + 1} of ${v.length}</span>
+      <button class="btn icon subtle" data-act="prev" title="Previous (K)" aria-label="Previous change" ${idx <= 0 ? "disabled" : ""}>${ic("up")}</button>
+      <button class="btn icon subtle" data-act="next" title="Next (J)" aria-label="Next change" ${idx >= v.length - 1 ? "disabled" : ""}>${ic("down")}</button>
+    </div>
+    <div class="infobar ${info[0]}">${ic(info[1])}<div class="grow"><b>${info[2]}</b>${info[3]}</div></div>
+    <div class="lchecks">
+      ${layerChip("Signature", "RSA record genuine", c.layers.sig, "Record does not verify")}
+      ${layerChip("Mirror copy", "Encrypted copy intact", c.layers.mirror, "Copy damaged")}
+      ${layerChip("Content", "SHA-256 matches", c.layers.content, c.ver ? "SHA-256 differs" : "No approved version")}
+      ${layerChip("Metadata", "Owner and ACL match", c.layers.meta, "Permissions differ")}
+    </div>
+    <div class="kv">
+      <div class="h">Property</div><div class="h">Approved${c.ver ? " · version " + c.ver : ""}</div><div class="h">Now on disk</div>
+      <div class="k">SHA-256</div>${hashCell(c.exp, false)}<div class="mono hash ${c.exp !== c.obs ? "bad" : ""}"><span><b>${c.obs.slice(0, 8)}</b>${c.obs.slice(8)}</span><button class="copy" data-copy="${c.obs}" title="Copy hash (C)">${ic("copy")}</button></div>
+      <div class="k">Size</div><div>${c.size[0] ?? "—"}</div><div class="${c.size[0] !== c.size[1] ? "bad" : ""}">${c.size[1]}</div>
+      ${c.meta ? `<div class="k">Permissions</div><div>${c.meta[0]}</div><div class="bad">${c.meta[1]}</div>` : ""}
+      <div class="k">Signature</div><div>${c.ver ? "Valid · key a1b2c3d4" : "No record"}</div><div class="${c.layers.sig === false ? "bad" : ""}">${c.layers.sig === false ? "Does not verify" : c.ver ? "Valid" : "—"}</div>
+      <div class="k">Detected</div><div class="muted">—</div><div>${clock(c.at)} · ${ago(c.at)} · run #4182</div>
+    </div>
+    <div class="diffbar"><h2>Content comparison</h2>${c.diff.length ? `<span class="stat"><span class="a">+${adds}</span> <span class="r">−${dels}</span></span>` : ""}<span class="sp"></span>
+      ${c.diff.length ? `<label class="toggle" style="font-size:13px"><span class="muted">Only changes</span><input type="checkbox" id="onlyChg" ${state.onlyChanges ? "checked" : ""}></label>
+      <div class="seg" role="group" aria-label="Diff layout"><button class="${state.diffMode === "split" ? "on" : ""}" data-mode="split">Side by side</button><button class="${state.diffMode === "uni" ? "on" : ""}" data-mode="uni">Unified</button></div>` : ""}</div>
+    ${renderDiff(c)}
+    <p class="subtle dfoot">Accepting creates a new signed version and needs your password, an authenticator code and the signing-key passphrase. Restoring first saves the current file as evidence.</p>`;
+}
+function renderReview() { renderChips(); renderList(); renderBulk(); renderDetail(); }
+function selectChange(id, focus) {
+  state.sel = id; state.unread.delete(id); renderList(); renderDetail(); renderBell();
+  if (focus) $(`.lrow[data-sel="${id}"]`)?.focus(); $(`.lrow[data-sel="${id}"]`)?.scrollIntoView({ block: "nearest" });
+  $("#detail").scrollTop = 0;
+}
+function step(d) { const v = visible(); if (!v.length) return; const i = v.findIndex(c => c.id === state.sel); const n = v[Math.max(0, Math.min(v.length - 1, (i < 0 ? 0 : i + d)))]; if (n) selectChange(n.id, true); }
+function openChange(id) { state.sel = +id; go("review"); renderReview(); }
+
+/* ===================================================================== decisions */
+function nextAfter(ids) { const v = visible(); const i = v.findIndex(c => ids.includes(c.id)); const rest = v.filter(c => !ids.includes(c.id)); return (rest[i] || rest[i - 1] || rest[0])?.id ?? null; }
+function removeChanges(ids) { const removed = []; ids.forEach(id => { const i = changes.findIndex(c => c.id === id); if (i >= 0) removed.push({ c: changes.splice(i, 1)[0], i }); state.checked.delete(id); }); return removed; }
+function logAudit(a, target, t = "change") { audit.unshift({ at: Date.now(), t, a, target, by: "Administrator", h: Math.random().toString(16).slice(2, 10) }); renderAudit(); }
+function decide(kind, ids, reason) {
+  const next = nextAfter(ids), removed = removeChanges(ids);
+  const names = removed.map(r => r.c.file);
+  const label = { accept: "Change accepted", restore: "File restored", reject: "Marked as false positive" }[kind];
+  removed.forEach(r => logAudit(label, r.c.path.replace("C:\\inetpub\\", "") + (kind === "accept" ? ` · v${r.c.ver + 1}` : kind === "restore" ? ` · v${r.c.ver}` : "") + (reason ? ` · "${reason}"` : "")));
+  state.sel = next; renderAll();
+  const many = names.length > 1;
+  const text = kind === "accept" ? (many ? `${names.length} files are now protected with new signed versions.` : removed[0].c.ver ? `${names[0]} is now protected as version ${removed[0].c.ver + 1}.` : `${names[0]} is now protected.`)
+             : kind === "restore" ? (many ? `${names.length} files match their approved versions again.` : `${names[0]} matches approved version ${removed[0].c.ver} again.`)
+             : `${names[0]} will be checked again on the next run.`;
+  toast(many ? `${names.length} ${label.toLowerCase().replace("change ", "changes ").replace("file ", "files ")}` : label, text, kind === "reject" ? { label: "Undo", fn: () => { removed.reverse().forEach(r => changes.splice(r.i, 0, r.c)); state.sel = removed[0].c.id; audit.shift(); renderAll(); renderAudit(); toast("Undone", `${names[0]} is back in the review queue.`); } } : null);
+  if (!changes.length && state.page === "review") setTimeout(() => toast("All caught up", "Every protected file matches its approved version."), 50);
+}
+function openDialog(kind, ids) {
+  const items = ids.map(id => changes.find(c => c.id === id)).filter(Boolean);
+  if (kind === "restore") { const r = items.filter(c => c.ver > 0); if (!r.length) return; items.splice(0, items.length, ...r); }
+  if (!items.length) return;
+  state.dlg = { kind, ids: items.map(c => c.id) };
+  const one = items.length === 1 ? items[0] : null;
+  $("#fKey").style.display = kind === "accept" ? "" : "none";
+  $("#dlgOk").textContent = kind === "accept" ? (one ? "Accept" : `Accept ${items.length}`) : (one ? "Restore" : `Restore ${items.length}`);
+  $("#dlgText").textContent = kind === "accept" ? "You're about to approve new content. FileVow will sign it with your baseline key." : "FileVow will save the current file as evidence, then put back the approved copy from the encrypted vault.";
+  $("#dlgSum").innerHTML = one
+    ? `<div><span>File</span><span class="mono">${esc(one.file)}</span></div><div><span>Version</span><span>${kind === "accept" ? (one.ver ? `v${one.ver} → v${one.ver + 1}` : "new → v1") : `current → v${one.ver}`}</span></div>` + (kind === "accept" ? `<div><span>New SHA-256</span><span class="mono">${short(one.obs)}</span></div><div><span>Signing key</span><span class="mono">a1b2c3d4</span></div>` : `<div><span>Evidence copy</span><span class="mono">${short(one.obs)}</span></div>`)
+    : `<div><span>${items.length} files</span><span>${kind === "accept" ? "each gets a new signed version" : "each is restored and evidence saved"}</span></div><ul>${items.map(c => `<li class="mono">${esc(c.file)}</li>`).join("")}</ul>`;
+  $$("#dlgScrim .field").forEach(f => { f.classList.remove("err"); f.querySelector("input").value = ""; });
+  $("#dlgScrim").classList.add("on"); $("#f1").focus();
+}
+function submitDialog() {
+  const req = ["pw", "otp", "why"].concat(state.dlg.kind === "accept" ? ["key"] : []);
+  let ok = true;
+  $$("#dlgScrim .field").forEach(f => { const need = req.includes(f.dataset.f); const v = f.querySelector("input").value.trim();
+    const bad = need && (!v || (f.dataset.f === "otp" && !/^\d{6}$/.test(v))); f.classList.toggle("err", bad); if (bad && ok) { f.querySelector("input").focus(); ok = false; } });
+  if (!ok) return;
+  const { kind, ids } = state.dlg; const reason = $("#f4").value.trim(); closeDialogs(); decide(kind, ids, reason);
+}
+function act(kind) {
+  const c = changes.find(x => x.id === state.sel); if (!c) return;
+  if (kind === "accept") openDialog("accept", [c.id]);
+  else if (kind === "restore" && c.ver) openDialog("restore", [c.id]);
+  else if (kind === "reject") decide("reject", [c.id]);
+  else if (kind === "escalate") { logAudit("Change escalated", c.path.replace("C:\\inetpub\\", ""), "change"); toast("Escalated", `The security team was notified about ${c.file}.`); }
+  else if (kind === "next") step(1); else if (kind === "prev") step(-1);
+}
+
+/* ===================================================================== other pages */
+function renderFiles() {
+  const q = $("#fFilter").value.toLowerCase(), st = $("#fStatus").value;
+  const rows = files.map(f => ({ p: f[0], h: f[1] + "…" + f[2], ok: true })).concat(changes.filter(c => c.ver).map(c => ({ p: c.path, h: short(c.obs), ok: false, id: c.id })))
+    .filter(r => (!q || r.p.toLowerCase().includes(q)) && (!st || (st === "ok") === r.ok)).sort((a, b) => a.ok - b.ok || a.p.localeCompare(b.p));
+  $("#fCount").textContent = `${rows.length} shown · 1,284 protected`;
+  $("#filesTable").innerHTML = `<div class="tr th"><div>File</div><div>Status</div><div>SHA-256</div><div>Verified</div><div></div></div>` + (rows.length ? rows.map(r => `<div class="tr ${r.ok ? "" : "click"}" ${r.ok ? "" : `data-open="${r.id}"`}><div class="mono ellip" title="${esc(r.p)}">${esc(r.p)}</div><div>${r.ok ? `<span class="pill ok">${ic("check")}Verified</span>` : `<span class="pill high">${ic("warn")}Needs review</span>`}</div><div class="mono">${r.h}</div><div class="muted">${clock(state.lastRun)}</div><div><button class="copy" data-copy="${esc(r.p)}" title="Copy path">${ic("copy")}</button></div></div>`).join("")
+    : `<div class="empty" style="padding:28px">No files match.</div>`);
+}
+function renderRuns() {
+  const runs = []; for (let i = 0; i < 24; i++) { const t = state.lastRun - i * 15 * MIN; runs.push({ id: 4182 - i + (state.lastRun > NOW ? 1 : 0), t, issues: i === 0 ? changes.length : 0, dur: (9 + Math.sin(i * 1.7) * .35 + (i === 0 ? .4 : 0)).toFixed(1) }); }
+  $("#runsTable").innerHTML = `<div class="tr th"><div>Run</div><div>Started</div><div>Result</div><div>Files</div><div>Duration</div><div>Report</div></div>` + runs.slice(0, 8).map(r => `<div class="tr"><div class="mono">#${r.id}</div><div class="muted">${clock(r.t)} · ${ago(r.t)}</div><div>${r.issues ? `<span class="pill crit">${ic("warn")}${r.issues} issue${r.issues > 1 ? "s" : ""}</span>` : `<span class="pill ok">${ic("check")}No changes</span>`}</div><div>1,284</div><div class="muted">${r.dur} s</div><div class="muted" style="display:flex;align-items:center;gap:6px">${ic("check")}Signature valid</div></div>`).join("");
+  const pts = runs.slice().reverse().map((r, i) => [i * (600 / 23), 80 - (r.dur - 8) * 40]);
+  $("#durChart").innerHTML = `<polyline points="${pts.map(p => p.join(",")).join(" ")}" fill="none" stroke="var(--accent)" stroke-width="2" vector-effect="non-scaling-stroke"/>` + pts.map((p, i) => `<circle cx="${p[0]}" cy="${p[1]}" r="2.5" fill="${i === 23 && changes.length ? "var(--fv-critical)" : "var(--accent)"}" vector-effect="non-scaling-stroke"/>`).join("");
+}
+function renderAudit() {
+  const t = $("#aType").value, rows = audit.filter(e => !t || e.t === t);
+  $("#auditTable").innerHTML = `<div class="tr th"><div>Time</div><div>Action</div><div>Target</div><div>By</div><div>Entry hash</div></div>` + rows.map(e => `<div class="tr"><div class="muted" title="${new Date(e.at).toLocaleString()}">${ago(e.at)}</div><div>${esc(e.a)}</div><div class="mono ellip" title="${esc(e.target)}">${esc(e.target)}</div><div>${esc(e.by)}</div><div class="mono">${e.h}…</div></div>`).join("");
+  if (state.page === "home") renderHome();
+}
+function exportCSV() {
+  const rows = [["time_utc", "action", "target", "actor", "entry_hash"]].concat(audit.map(e => [new Date(e.at).toISOString(), e.a, e.target, e.by, e.h]));
+  const csv = rows.map(r => r.map(x => `"${String(x).replace(/"/g, '""')}"`).join(",")).join("\r\n");
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "filevow-audit-log.csv"; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000); toast("Audit log exported", `${audit.length} entries saved to filevow-audit-log.csv`);
+}
+
+/* ===================================================================== notifications / bell */
+function renderBell() {
+  $("#bellDot").style.display = state.unread.size ? "" : "none";
+  const items = changes.map(c => ({ id: c.id, sev: c.sev, t: `${c.type}: ${c.file}`, s: c.detail, at: c.at }))
+    .concat([{ sev: "ok", t: "Verification run #4181", s: "No changes · 1,284 files", at: NOW - 17 * MIN }]);
+  $("#flList").innerHTML = items.length ? items.map(n => `<div class="nitem ${n.id && state.unread.has(n.id) ? "unread" : ""}" ${n.id ? `data-open="${n.id}"` : `data-goto="runs"`}>${n.sev === "ok" ? ic("ok", "i sev ok") : sevIcon(n.sev)}<div><b style="font-weight:600">${esc(n.t)}</b><small>${esc(n.s)}</small></div><time>${ago(n.at)}</time></div>`).join("") : `<div class="empty" style="padding:24px">No notifications</div>`;
+}
+function toggleFly() { const f = $("#flyout"); const on = !f.classList.contains("on"); f.classList.toggle("on", on); if (on) renderBell(); }
+function closeFly() { $("#flyout").classList.remove("on"); }
+
+/* ===================================================================== command palette */
+function palSource() {
+  const pages = [["home", "Home", "home"], ["review", "Review changes", "review"], ["files", "Protected files", "file"], ["folders", "Monitored folders", "folder"], ["runs", "Verification history", "verify"], ["audit", "Audit log", "audit"], ["settings", "Settings", "settings"]];
+  return [
+    ...changes.map(c => ({ g: "Changes waiting for review", icon: SEV[c.sev].icon, label: `${c.file}`, sub: c.type, run: () => openChange(c.id), sev: c.sev })),
+    ...pages.map((p, i) => ({ g: "Go to", icon: p[2], label: p[1], sub: `Alt ${i + 1}`, run: () => go(p[0]) })),
+    { g: "Commands", icon: "verify", label: "Verify all files now", sub: "Ctrl Shift V", run: verifyNow },
+    { g: "Commands", icon: "lock", label: "Verify audit chain", sub: "", run: () => { go("audit"); verifyChain(); } },
+    { g: "Commands", icon: "download", label: "Export audit log as CSV", sub: "", run: exportCSV },
+    { g: "Commands", icon: "palette", label: "Switch to dark theme", sub: "", run: () => setTheme("dark") },
+    { g: "Commands", icon: "palette", label: "Switch to light theme", sub: "", run: () => setTheme("light") },
+    { g: "Commands", icon: "density", label: "Toggle compact density", sub: "", run: () => setDensity(document.body.classList.contains("compact") ? "comfortable" : "compact") },
+    { g: "Commands", icon: "keyboard", label: "Show keyboard shortcuts", sub: "?", run: showKeys },
+    ...files.map(f => ({ g: "Protected files", icon: "file", label: f[0].split("\\").pop(), sub: f[0].replace(/\\[^\\]+$/, ""), run: () => { go("files"); $("#fFilter").value = f[0].split("\\").pop(); renderFiles(); } })),
+  ];
+}
+function openPalette() { closeFly(); $("#palIn").value = ""; renderPal(); $("#palScrim").classList.add("on"); $("#palIn").focus(); }
+function renderPal() {
+  const q = $("#palIn").value.trim().toLowerCase(); const all = palSource();
+  const items = q ? all.filter(x => (x.label + " " + x.sub + " " + x.g).toLowerCase().includes(q)) : all.filter(x => x.g !== "Protected files");
+  state.palItems = items.slice(0, 40); state.palIdx = 0;
+  let html = "", g = null;
+  state.palItems.forEach((x, i) => { if (x.g !== g) { html += `<div class="grp">${x.g}</div>`; g = x.g; }
+    html += `<div class="opt ${i === 0 ? "act" : ""}" data-pi="${i}" role="option">${x.sev ? sevIcon(x.sev) : ic(x.icon)}<span class="${x.g.startsWith("Changes") || x.g.startsWith("Protected") ? "mono" : ""}" style="font-size:${x.g.startsWith("Changes") || x.g.startsWith("Protected") ? "13px" : "14px"}">${esc(x.label)}</span><span class="s">${esc(x.sub)}</span></div>`; });
+  $("#palRes").innerHTML = html || `<div class="empty" style="padding:24px">No results for “${esc(q)}”</div>`;
+}
+function palMove(d) { if (!state.palItems.length) return; state.palIdx = (state.palIdx + d + state.palItems.length) % state.palItems.length;
+  $$(".palette .opt").forEach(o => o.classList.toggle("act", +o.dataset.pi === state.palIdx)); $(`.palette .opt[data-pi="${state.palIdx}"]`)?.scrollIntoView({ block: "nearest" }); }
+function palRun(i) { const x = state.palItems[i]; if (!x) return; closeDialogs(); x.run(); }
+
+/* ===================================================================== misc actions */
+function showKeys() { closeDialogs(); $("#keyScrim").classList.add("on"); setTimeout(() => $("#keyClose").focus(), 20); }
+function closeDialogs() { $$(".scrim").forEach(s => s.classList.remove("on")); state.dlg = null; }
+function anyDialog() { return $$(".scrim.on").length > 0; }
+let toastTimer;
+function toast(t, m, action) {
+  $("#toastTitle").textContent = t; $("#toastText").textContent = m;
+  const b = $("#toastAct"); if (action) { b.style.display = ""; b.textContent = action.label; b.onclick = () => { $("#toast").classList.remove("on"); action.fn(); }; } else b.style.display = "none";
+  const el = $("#toast"); el.classList.remove("on"); void el.offsetWidth; el.classList.add("on");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove("on"), action ? 7000 : 4200);
+}
+async function copyText(s, btn) {
+  try { await navigator.clipboard.writeText(s); } catch (e) { const t = document.createElement("textarea"); t.value = s; document.body.appendChild(t); t.select(); document.execCommand("copy"); t.remove(); }
+  if (btn) { const old = btn.innerHTML; btn.innerHTML = ic("check"); btn.style.color = "var(--fv-verified)"; setTimeout(() => { btn.innerHTML = old; btn.style.color = ""; }, 1200); }
+  toast("Copied", s.length > 60 ? s.slice(0, 60) + "…" : s);
+}
+let verifying = false;
+function verifyNow() {
+  if (verifying) return; verifying = true;
+  const p = $("#prog"), bar = p.firstElementChild, btn = $("#verifyBtn"); btn.disabled = true; p.classList.add("on"); bar.style.width = "0"; let w = 0;
+  $("#fLast").textContent = "verifying…"; $("#sbRun").textContent = "Verifying 1,284 files…";
+  const t = setInterval(() => { w += 6 + Math.random() * 9; bar.style.width = Math.min(w, 100) + "%";
+    if (w >= 100) { clearInterval(t); verifying = false; state.lastRun = Date.now(); setTimeout(() => { p.classList.remove("on"); btn.disabled = false; }, 200);
+      logAudit("Verification run (manual)", `1,284 files · ${changes.length} issue${changes.length === 1 ? "" : "s"}`, "system"); tick(); renderRuns();
+      toast("Verification complete", changes.length ? `${changes.length} change${changes.length > 1 ? "s" : ""} still need review.` : "All 1,284 files match their approved versions."); } }, 110);
+}
+function verifyChain() {
+  $("#chainRes").innerHTML = `<div class="infobar info">${ic("info")}<div class="grow">Checking ${fmtNum(1833 + audit.length - 6)} entries…</div></div>`;
+  setTimeout(() => { $("#chainRes").innerHTML = `<div class="infobar ok">${ic("ok")}<div class="grow"><b>Audit chain intact.</b>${fmtNum(1833 + audit.length - 6)} entries checked · latest checkpoint signed ${ago(state.lastRun)} · no gaps or edits.</div></div>`; }, 700);
+}
+function setTheme(v) {
+  if (v === "system") document.documentElement.removeAttribute("data-theme"); else document.documentElement.setAttribute("data-theme", v);
+  const dark = v === "dark" || (v === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
+  $$(".themed-logo").forEach(i => i.src = dark ? "../design/logo-mark-reversed.svg" : "../design/logo-mark.svg");
+  $("#themeSel").value = v; try { localStorage.setItem("fv-theme", v); } catch (e) {}
+}
+function setDensity(v) { document.body.classList.toggle("compact", v === "compact"); $("#densSel").value = v; try { localStorage.setItem("fv-density", v); } catch (e) {} }
+function tick() {
+  const next = state.lastRun + 15 * MIN, left = Math.max(0, next - Date.now());
+  const mm = String(Math.floor(left / 60000)).padStart(2, "0"), ss = String(Math.floor(left / 1000) % 60).padStart(2, "0");
+  if (!verifying) { $("#fLast").textContent = ago(state.lastRun); $("#sbRun").textContent = `Last run ${clock(state.lastRun)} · 9.4 s`; }
+  $("#fNext").textContent = `${mm}:${ss}`; $("#sbNext").textContent = `Next in ${mm}:${ss}`;
+  $("#fBeat").textContent = `${(Math.floor(Date.now() / 1000) % 60) % 10 + 1} s ago`;
+  if (left === 0 && !verifying) verifyNow();
+}
+function renderAll() { renderHome(); renderBars(); if (state.page === "review") renderReview(); renderFiles(); renderRuns(); }
+
+/* ===================================================================== events */
+document.addEventListener("click", e => {
+  const t = e.target;
+  if (!t.closest("#flyout") && !t.closest("#bellBtn")) closeFly();
+  const cp = t.closest("[data-copy]"); if (cp) { e.stopPropagation(); return copyText(cp.dataset.copy, cp); }
+  if (t.matches("[data-check]")) { const id = +t.dataset.check; t.checked ? state.checked.add(id) : state.checked.delete(id); renderBulk(); return; }
+  const nav = t.closest("[data-page]"); if (nav) return go(nav.dataset.page);
+  const g = t.closest("[data-goto]"); if (g) { e.preventDefault(); return go(g.dataset.goto); }
+  const o = t.closest("[data-open]"); if (o) { closeFly(); return openChange(o.dataset.open); }
+  const s = t.closest("[data-sel]"); if (s) return selectChange(+s.dataset.sel, true);
+  const a = t.closest("[data-act]"); if (a) return act(a.dataset.act);
+  const ch = t.closest("[data-sev]"); if (ch) { state.sevFilter = ch.dataset.sev; if (!visible().find(c => c.id === state.sel)) state.sel = visible()[0]?.id ?? null; return renderReview(); }
+  const m = t.closest("[data-mode]"); if (m) { state.diffMode = m.dataset.mode; return renderDetail(); }
+  const pi = t.closest("[data-pi]"); if (pi) return palRun(+pi.dataset.pi);
+  const ac = t.closest("[data-action]"); if (ac) { const k = ac.dataset.action; if (k === "palette") openPalette(); if (k === "keys") showKeys(); if (k === "verify") verifyNow(); return; }
+});
+document.addEventListener("change", e => { if (e.target.id === "onlyChg") { state.onlyChanges = e.target.checked; renderDetail(); } });
+$("#qFilter").addEventListener("input", e => { state.q = e.target.value; if (!visible().find(c => c.id === state.sel)) state.sel = visible()[0]?.id ?? null; renderList(); renderDetail(); });
+$("#groupSel").addEventListener("change", e => { state.group = e.target.value; renderList(); });
+$("#fFilter").addEventListener("input", renderFiles); $("#fStatus").addEventListener("change", renderFiles);
+$("#aType").addEventListener("change", renderAudit); $("#exportBtn").onclick = exportCSV; $("#chainBtn").onclick = verifyChain;
+$("#bAccept").onclick = () => openDialog("accept", [...state.checked]); $("#bRestore").onclick = () => openDialog("restore", [...state.checked]);
+$("#bClear").onclick = () => { state.checked.clear(); renderList(); renderBulk(); };
+$("#verifyBtn").onclick = verifyNow; $("#searchBtn").onclick = openPalette; $("#bellBtn").onclick = toggleFly; $("#backBtn").onclick = back;
+$("#markRead").onclick = e => { e.preventDefault(); state.unread.clear(); renderBell(); };
+$("#dlgOk").onclick = submitDialog; $("#dlgCancel").onclick = closeDialogs; $("#keyClose").onclick = closeDialogs; $("#toastX").onclick = () => $("#toast").classList.remove("on");
+$$(".scrim").forEach(s => s.addEventListener("mousedown", e => { if (e.target === s) closeDialogs(); }));
+$$("#dlgScrim .field input").forEach(i => i.addEventListener("input", () => i.closest(".field").classList.remove("err")));
+$("#f2").addEventListener("input", e => { e.target.value = e.target.value.replace(/\D/g, "").slice(0, 6); });
+$("#palIn").addEventListener("input", renderPal);
+$("#themeSel").onchange = e => setTheme(e.target.value); $("#densSel").onchange = e => setDensity(e.target.value);
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => setTheme($("#themeSel").value));
+
+document.addEventListener("keydown", e => {
+  const tgt = e.target instanceof Element ? e.target : document.body;
+  const typing = tgt.matches("input, textarea, select") && tgt.type !== "checkbox";
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); return $("#palScrim").classList.contains("on") ? closeDialogs() : openPalette(); }
+  if ($("#palScrim").classList.contains("on")) {
+    if (e.key === "ArrowDown") { e.preventDefault(); palMove(1); } else if (e.key === "ArrowUp") { e.preventDefault(); palMove(-1); }
+    else if (e.key === "Enter") { e.preventDefault(); palRun(state.palIdx); } else if (e.key === "Escape") closeDialogs();
+    return;
+  }
+  if (e.key === "Escape") { if (anyDialog()) return closeDialogs(); if ($("#flyout").classList.contains("on")) return closeFly(); if (typing) return tgt.blur(); }
+  if ($("#dlgScrim").classList.contains("on")) { if (e.key === "Enter") { e.preventDefault(); submitDialog(); } return; }
+  if (anyDialog()) return;
+  if (e.altKey && /^[1-7]$/.test(e.key)) { e.preventDefault(); return go(["home", "review", "files", "folders", "runs", "audit", "settings"][+e.key - 1]); }
+  if (e.altKey && e.key === "ArrowLeft") { e.preventDefault(); return back(); }
+  if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "v") { e.preventDefault(); return verifyNow(); }
+  if (typing || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.key === "?") { e.preventDefault(); return showKeys(); }
+  if (e.key === "Enter" && tgt.matches("[data-open]")) return openChange(tgt.dataset.open);
+  if (state.page !== "review") return;
+  const k = e.key.toLowerCase();
+  if (k === "j" || e.key === "ArrowDown") { e.preventDefault(); step(1); }
+  else if (k === "k" || e.key === "ArrowUp") { e.preventDefault(); step(-1); }
+  else if (k === "/") { e.preventDefault(); $("#qFilter").focus(); }
+  else if (k === "x" && state.sel) { state.checked.has(state.sel) ? state.checked.delete(state.sel) : state.checked.add(state.sel); renderList(); renderBulk(); $(`.lrow[data-sel="${state.sel}"]`)?.focus(); }
+  else if (k === "a") act("accept"); else if (k === "r") act("restore"); else if (k === "f") act("reject"); else if (k === "e") act("escalate");
+  else if (k === "c") { const c = changes.find(x => x.id === state.sel); if (c) copyText(c.obs); }
+});
+
+/* ===================================================================== start */
+let th = "system", dn = "comfortable"; try { th = localStorage.getItem("fv-theme") || th; dn = localStorage.getItem("fv-density") || dn; } catch (e) {}
+setTheme(th); setDensity(dn); renderAll(); renderAudit(); tick(); setInterval(tick, 1000);
+</script>
+</body>
+</html>

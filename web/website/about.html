@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>About · FileVow</title>
+  <meta name="description" content="Why FileVow exists, who it is for and how it protects your files.">
+  <meta name="theme-color" content="#0F2A44">
+  <meta property="og:title" content="About · FileVow">
+  <meta property="og:description" content="Why FileVow exists, who it is for and how it protects your files.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/site.css">
+  <script src="assets/site.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#content">Skip to content</a>
+  <header class="nav">
+    <div class="wrap">
+      <a class="brand" href="index.html"><i aria-hidden="true"></i>FileVow</a>
+      <button class="nav-toggle" aria-expanded="false" aria-controls="site-menu">Menu</button>
+      <ul id="site-menu">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="features.html">Features</a></li>
+        <li><a href="about.html" aria-current="page">About</a></li>
+        <li><a href="privacy.html">Privacy</a></li>
+      </ul>
+      <a class="btn primary small" href="download.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg><span>Download</span></a>
+    </div>
+  </header>
+
+  <main id="content">
+    <div class="wrap doc">
+      <span class="eyebrow">About</span>
+      <h1>Why we built FileVow</h1>
+      <p class="lead">Most people only find out a file was changed when it's too late: a contract with different numbers, a website page with injected code, a folder of photos encrypted by ransomware.</p>
+      <p>Businesses solve this with <b>file integrity monitoring</b>, software that takes a trusted snapshot of important files and raises the alarm when they differ from it. Those tools are usually built for server rooms and security teams. FileVow brings the same idea to your own desktop, with an interface anyone can use.</p>
+
+      <h2>Who it's for</h2>
+      <ul>
+        <li><b>Freelancers and small businesses</b> keeping contracts, invoices and client files.</li>
+        <li><b>Developers and site owners</b> who want to know if code or website files are altered.</li>
+        <li><b>Students and researchers</b> protecting theses, data sets and lab notes.</li>
+        <li><b>Families</b> who want to know their documents and photos are exactly as they left them.</li>
+      </ul>
+
+      <h2>How it works, in short</h2>
+      <p>When you protect a file, FileVow records three things: a SHA-256 fingerprint of its contents, a digital signature made with your personal signing key, and an encrypted backup copy. From then on it re-checks the file within seconds of any activity and fully every 15 minutes. If the fingerprint no longer matches, or a record's signature doesn't check out, you're alerted and shown exactly what changed.</p>
+      <p>FileVow never accepts a change by itself. You decide: keep the change, restore the original, or remove an unexpected file.</p>
+
+      <h2>What FileVow is not</h2>
+      <p>FileVow is not an antivirus and not a cloud backup. It doesn't block programs from running and it doesn't copy your files to the internet. It's the alarm and the safety net for the files you care about most, and it works well alongside Microsoft Defender and your usual backups.</p>
+
+      <h2>Built with care</h2>
+      <p>FileVow uses well-established, openly reviewed cryptography (SHA-256, RSA-3072 with PSS signatures, AES-256-GCM) from the widely used <i>cryptography</i> library. Its history is kept in a hash-chained audit log, its secrets in the Windows Credential Manager, and its dashboard only listens on your own computer.</p>
+
+      <p class="actions"><a class="btn primary" href="download.html">Download FileVow</a> <a class="btn" href="privacy.html">Read the privacy policy</a></p>
+    </div>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <a class="brand small" href="index.html"><i aria-hidden="true"></i>FileVow</a>
+      <span>&copy; <span data-year>2026</span> FileVow. File integrity monitoring for your own computer.</span>
+      <nav aria-label="Footer">
+        <a href="features.html">Features</a>
+        <a href="about.html">About</a>
+        <a href="privacy.html">Privacy policy</a>
+        <a href="download.html">Download</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Download · FileVow</title>
+  <meta name="description" content="Download FileVow 0.1.0 for Windows 10 and 11.">
+  <meta name="theme-color" content="#0F2A44">
+  <meta property="og:title" content="Download · FileVow">
+  <meta property="og:description" content="Download FileVow 0.1.0 for Windows 10 and 11.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/site.css">
+  <script src="assets/site.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#content">Skip to content</a>
+  <header class="nav">
+    <div class="wrap">
+      <a class="brand" href="index.html"><i aria-hidden="true"></i>FileVow</a>
+      <button class="nav-toggle" aria-expanded="false" aria-controls="site-menu">Menu</button>
+      <ul id="site-menu">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="features.html">Features</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="privacy.html">Privacy</a></li>
+      </ul>
+      <a class="btn primary small" href="download.html" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg><span>Download</span></a>
+    </div>
+  </header>
+
+  <main id="content">
+    <div class="wrap doc wide">
+      <span class="eyebrow">Download</span>
+      <h1>Download FileVow for Windows</h1>
+      <p class="lead">Free for personal use. Everything runs on your own computer.</p>
+
+      <div class="card download-card">
+        <div>
+          <h3 class="tight">FileVow 0.1.0 for Windows</h3>
+          <p class="muted flush">64-bit installer · Windows 10 and 11</p>
+          <p class="muted label">SHA-256 of the installer:</p>
+          <p class="checksum" data-checksum="downloads/FileVow-Setup-0.1.0.exe.sha256">Published together with the installer.</p>
+        </div>
+        <a class="btn primary" href="downloads/FileVow-Setup-0.1.0.exe" download><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.5 10.5 4.5v7H3ZM12 4.3 21 3v8.5h-9ZM3 12.5h7.5v7L3 18.5ZM12 12.5h9V21l-9-1.3Z" fill="currentColor" stroke="none"/></svg>Download installer</a>
+      </div>
+
+      <h2>System requirements</h2>
+      <ul class="reqs">
+        <li>Operating system <span>Windows 10 (21H2 or later) or Windows 11, 64-bit</span></li>
+        <li>Browser engine <span>Microsoft Edge (built into Windows) shows the app window</span></li>
+        <li>Disk space <span>About 150 MB, plus room for encrypted backup copies of what you protect</span></li>
+        <li>Memory <span>4 GB RAM or more</span></li>
+        <li>Permissions <span>Installs for your Windows account only; no administrator rights needed</span></li>
+      </ul>
+
+      <h2>Install</h2>
+      <ol>
+        <li>Run <code>FileVow-Setup-0.1.0.exe</code>. If Windows SmartScreen says it doesn't recognise the app yet, choose <i>More info</i> and check the publisher before choosing <i>Run anyway</i>.</li>
+        <li>Choose whether FileVow should start with Windows (recommended, so monitoring never stops).</li>
+        <li>Open FileVow from the Start menu. It opens in its own window.</li>
+      </ol>
+
+      <h2>Your first five minutes</h2>
+      <ol>
+        <li><b>Create your account.</b> The first account on a computer becomes its administrator.</li>
+        <li><b>Create your signing key</b> from the Get started checklist and choose a passphrase you'll remember.</li>
+        <li><b>Click Add folder or file, then Browse…</b> and choose what to protect.</li>
+        <li><b>Download a backup of your signing key</b> (Settings) and keep it somewhere safe.</li>
+        <li><b>Turn on two-step verification</b> and, if you like, email or Windows notifications.</li>
+      </ol>
+      <p>The <i>Help</i> page inside the app explains every feature.</p>
+
+      <h2>Check your download</h2>
+      <p>To make sure the installer wasn't altered on its way to you, compare its fingerprint with the one shown above. In PowerShell:</p>
+      <pre class="cmd">Get-FileHash .\FileVow-Setup-0.1.0.exe -Algorithm SHA256</pre>
+
+      <h2>Uninstall</h2>
+      <p>Use <i>Settings → Apps → Installed apps → FileVow → Uninstall</i>. Your protected files are never touched. FileVow's own data (records and encrypted backups) stays in <code>%LOCALAPPDATA%\FileVow</code> until you delete that folder.</p>
+    </div>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <a class="brand small" href="index.html"><i aria-hidden="true"></i>FileVow</a>
+      <span>&copy; <span data-year>2026</span> FileVow. File integrity monitoring for your own computer.</span>
+      <nav aria-label="Footer">
+        <a href="features.html">Features</a>
+        <a href="about.html">About</a>
+        <a href="privacy.html">Privacy policy</a>
+        <a href="download.html">Download</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>

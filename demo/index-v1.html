@@ -1,0 +1,647 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FileVow</title>
+<meta name="theme-color" content="#F1F5F9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0B1623" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="../design/favicon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="../design/tokens.css">
+<style>
+:root {
+  --win-bg: #EEF2F7;           /* "Mica": the window surface, tinted with brand navy */
+  --card: #FFFFFF;
+  --card-2: #F8FAFC;
+  --stroke: #E2E8F0;
+  --stroke-strong: #CBD5E1;
+  --hover: rgba(15, 42, 68, .05);
+  --pressed: rgba(15, 42, 68, .09);
+  --nav-sel: rgba(15, 42, 68, .07);
+  --accent: #2F6FB3;           /* selection pill, focus, toggles */
+  --overlay: rgba(15, 23, 42, .32);
+  --shadow-dialog: 0 32px 64px rgba(15, 42, 68, .22), 0 2px 21px rgba(15, 42, 68, .14);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --win-bg: #0B1623; --card: #13233A; --card-2: #102035; --stroke: #22374F; --stroke-strong: #2E4766;
+    --hover: rgba(255,255,255,.055); --pressed: rgba(255,255,255,.085); --nav-sel: rgba(255,255,255,.07);
+    --accent: #6EA8E0; --overlay: rgba(0,0,0,.5);
+    --shadow-dialog: 0 32px 64px rgba(0,0,0,.5), 0 2px 21px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"] {
+  --win-bg: #0B1623; --card: #13233A; --card-2: #102035; --stroke: #22374F; --stroke-strong: #2E4766;
+  --hover: rgba(255,255,255,.055); --pressed: rgba(255,255,255,.085); --nav-sel: rgba(255,255,255,.07);
+  --accent: #6EA8E0; --overlay: rgba(0,0,0,.5);
+  --shadow-dialog: 0 32px 64px rgba(0,0,0,.5), 0 2px 21px rgba(0,0,0,.4);
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--win-bg); color: var(--fv-text); font: 400 14px/20px var(--fv-font-sans);
+       -webkit-font-smoothing: antialiased; overflow: hidden; user-select: none; }
+svg.i { width: 16px; height: 16px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.5;
+        stroke-linecap: round; stroke-linejoin: round; }
+.mono { font-family: var(--fv-font-mono); font-size: 12.5px; user-select: text; }
+.muted { color: var(--fv-text-muted); }
+.subtle { color: var(--fv-text-subtle); font-size: 12px; }
+
+/* ---------- title bar (blends into the window, like built-in apps) ---------- */
+.titlebar { height: 48px; display: flex; align-items: center; gap: 12px; padding-left: 14px;
+            -webkit-app-region: drag; app-region: drag; }
+.titlebar img { width: 18px; height: 18px; }
+.titlebar .name { font-size: 12px; }
+.titlebar .sp { flex: 1; }
+.search { -webkit-app-region: no-drag; app-region: no-drag; width: min(380px, 34vw); height: 32px; display: flex; align-items: center;
+          gap: 8px; padding: 0 10px; border-radius: 4px; background: var(--card); border: 1px solid var(--stroke);
+          border-bottom-color: var(--stroke-strong); color: var(--fv-text-subtle); font-size: 13px; }
+.search input { all: unset; flex: 1; color: var(--fv-text); font-size: 13px; }
+.wincontrols { display: flex; align-self: stretch; -webkit-app-region: no-drag; app-region: no-drag; }
+.wincontrols button { all: unset; width: 46px; display: grid; place-items: center; color: var(--fv-text); }
+.wincontrols button:hover { background: var(--hover); }
+.wincontrols button.close:hover { background: #C42B1C; color: #fff; }
+.wincontrols svg { width: 10px; height: 10px; stroke-width: 1; }
+/* When installed with window-controls-overlay, Windows draws the real min/max/close buttons */
+@media (display-mode: window-controls-overlay) {
+  .wincontrols { display: none; }
+  .titlebar { position: fixed; left: env(titlebar-area-x, 0); top: env(titlebar-area-y, 0);
+              width: env(titlebar-area-width, 100%); height: env(titlebar-area-height, 48px); }
+  .shell { margin-top: env(titlebar-area-height, 48px); }
+}
+
+/* ---------- shell ---------- */
+.shell { display: grid; grid-template-columns: 300px 1fr; height: calc(100% - 48px); }
+nav { padding: 4px 4px 12px 4px; display: flex; flex-direction: column; overflow-y: auto; }
+.account { display: flex; align-items: center; gap: 14px; padding: 12px 14px 18px; }
+.avatar { width: 56px; height: 56px; border-radius: 50%; background: var(--fv-navy-900); display: grid; place-items: center; }
+.avatar img { width: 34px; height: 34px; }
+.account b { display: block; font-weight: 600; font-size: 14px; }
+.account span { font-size: 12px; color: var(--fv-text-muted); }
+.navitem { all: unset; position: relative; display: flex; align-items: center; gap: 16px; height: 36px; margin: 2px 8px;
+           padding: 0 12px; border-radius: 4px; cursor: default; color: var(--fv-text); }
+.navitem:hover { background: var(--hover); }
+.navitem:active { background: var(--pressed); }
+.navitem.sel { background: var(--nav-sel); font-weight: 600; }
+.navitem.sel::before { content: ""; position: absolute; left: 0; top: 10px; width: 3px; height: 16px; border-radius: 2px; background: var(--accent); }
+.navitem .count { margin-left: auto; min-width: 20px; height: 18px; padding: 0 6px; border-radius: 9px; font-size: 11px; font-weight: 600;
+                  display: grid; place-items: center; background: var(--fv-critical); color: #fff; }
+.navitem .count.amber { background: var(--fv-pending); }
+.navitem:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+nav .grow { flex: 1; }
+
+main { background: var(--card-2); border-top-left-radius: 8px; border-top: 1px solid var(--stroke); border-left: 1px solid var(--stroke);
+       overflow-y: auto; }
+.page { display: none; max-width: 1060px; padding: 26px 40px 48px; margin: 0; }
+.page.on { display: block; animation: enter .18s ease-out; }
+@keyframes enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.ptitle { font-size: 28px; line-height: 36px; font-weight: 600; margin: 0 0 18px; color: var(--fv-heading); display: flex; align-items: center; gap: 8px; }
+.ptitle .crumb { color: var(--fv-text-muted); font-weight: 600; cursor: default; }
+.ptitle .crumb:hover { color: var(--fv-text); }
+.ptitle svg { width: 18px; height: 18px; color: var(--fv-text-subtle); }
+h2.sec { font-size: 14px; font-weight: 600; margin: 26px 0 8px; color: var(--fv-heading); }
+
+/* ---------- cards and rows (settings-card pattern) ---------- */
+.row { display: flex; align-items: center; gap: 16px; min-height: 66px; padding: 12px 16px; margin-bottom: 4px;
+       background: var(--card); border: 1px solid var(--stroke); border-radius: 6px; }
+.row.click:hover { background: color-mix(in srgb, var(--card) 92%, var(--fv-text) 8%); }
+.row.click:active { background: color-mix(in srgb, var(--card) 88%, var(--fv-text) 12%); }
+.row > svg.i { width: 20px; height: 20px; color: var(--fv-text); }
+.row .txt { flex: 1; min-width: 0; }
+.row .txt b { display: block; font-weight: 400; }
+.row .txt span { display: block; font-size: 12px; color: var(--fv-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row .chev { color: var(--fv-text-subtle); }
+.row .meta { font-size: 12px; color: var(--fv-text-muted); white-space: nowrap; }
+.sev { width: 20px; height: 20px; flex: none; }
+.row > svg.sev.crit, .sev.crit { color: var(--fv-critical); } .row > svg.sev.high, .sev.high { color: var(--fv-pending); }
+.row > svg.sev.ok, .sev.ok { color: var(--fv-verified); } .row > svg.sev.info, .sev.info { color: var(--fv-link); }
+
+/* ---------- hero status (like Windows Security) ---------- */
+.hero { display: grid; grid-template-columns: auto 1fr auto; gap: 24px; align-items: center; padding: 24px 26px;
+        background: var(--card); border: 1px solid var(--stroke); border-radius: 8px; }
+.hero .badge-ic { width: 72px; height: 72px; border-radius: 50%; display: grid; place-items: center; }
+.hero .badge-ic svg { width: 36px; height: 36px; stroke-width: 1.6; }
+.hero.ok .badge-ic { background: var(--fv-verified-bg); color: var(--fv-verified); }
+.hero.warn .badge-ic { background: var(--fv-critical-bg); color: var(--fv-critical); }
+.hero h1 { margin: 0; font-size: 20px; line-height: 28px; font-weight: 600; color: var(--fv-heading); }
+.hero p { margin: 2px 0 0; color: var(--fv-text-muted); }
+.hero .acts { display: flex; gap: 8px; }
+.layers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+.layer { background: var(--card); border: 1px solid var(--stroke); border-radius: 6px; padding: 14px 16px; }
+.layer .top { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+.layer .top svg { width: 20px; height: 20px; }
+.layer .n { font-size: 24px; line-height: 32px; font-weight: 600; color: var(--fv-heading); margin-top: 8px; }
+.layer .st { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--fv-verified); }
+.layer .st svg { width: 14px; height: 14px; }
+.layer .st.bad { color: var(--fv-critical); }
+
+/* ---------- controls ---------- */
+.btn { all: unset; display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 32px; padding: 0 14px; border-radius: 4px;
+       font-size: 14px; cursor: default; background: var(--card); color: var(--fv-text); border: 1px solid var(--stroke);
+       border-bottom-color: var(--stroke-strong); white-space: nowrap; }
+.btn:hover { background: color-mix(in srgb, var(--card) 94%, var(--fv-text) 6%); }
+.btn:active { opacity: .8; }
+.btn.primary { background: var(--fv-primary); color: var(--fv-on-primary); border-color: transparent; border-bottom-color: rgba(0,0,0,.25); }
+.btn.primary:hover { background: var(--fv-primary-hover); }
+.btn.danger { color: var(--fv-critical); }
+.btn svg.i { width: 16px; height: 16px; }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.btn[disabled] { opacity: .5; pointer-events: none; }
+.toggle { display: inline-flex; align-items: center; gap: 12px; font-size: 14px; cursor: default; }
+.toggle input { appearance: none; margin: 0; width: 40px; height: 20px; border-radius: 10px; border: 1px solid var(--fv-text-muted);
+                position: relative; background: transparent; transition: background .15s; }
+.toggle input::after { content: ""; position: absolute; top: 3px; left: 4px; width: 12px; height: 12px; border-radius: 50%;
+                       background: var(--fv-text-muted); transition: transform .15s, background .15s; }
+.toggle input:checked { background: var(--accent); border-color: var(--accent); }
+.toggle input:checked::after { transform: translateX(19px); background: #fff; }
+.toggle input:disabled { opacity: .55; }
+select.sel { appearance: none; height: 32px; padding: 0 30px 0 11px; border-radius: 4px; font: inherit; font-size: 14px; color: var(--fv-text);
+             background: var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M6 8l4 4 4-4' fill='none' stroke='%2364748B' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 8px center / 14px;
+             border: 1px solid var(--stroke); border-bottom-color: var(--stroke-strong); }
+.infobar { display: flex; gap: 12px; align-items: flex-start; padding: 12px 16px; border-radius: 6px; margin-bottom: 12px; border: 1px solid; }
+.infobar svg.i { width: 18px; height: 18px; margin-top: 1px; }
+.infobar b { font-weight: 600; margin-right: 6px; }
+.infobar.warn { background: var(--fv-pending-bg); border-color: color-mix(in srgb, var(--fv-pending) 25%, transparent); }
+.infobar.warn svg { color: var(--fv-pending); }
+.infobar.crit { background: var(--fv-critical-bg); border-color: color-mix(in srgb, var(--fv-critical) 25%, transparent); }
+.infobar.crit svg { color: var(--fv-critical); }
+.infobar.ok { background: var(--fv-verified-bg); border-color: color-mix(in srgb, var(--fv-verified) 25%, transparent); }
+.infobar.ok svg { color: var(--fv-verified); }
+.infobar .grow { flex: 1; }
+.progress { height: 3px; border-radius: 2px; background: var(--stroke); overflow: hidden; margin-top: 12px; display: none; }
+.progress.on { display: block; }
+.progress div { height: 100%; width: 0; background: var(--accent); transition: width .2s linear; }
+.pill { display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 9px; border-radius: 11px; font-size: 12px; font-weight: 600; }
+.pill svg { width: 13px; height: 13px; stroke-width: 2; }
+.pill.ok { background: var(--fv-verified-bg); color: var(--fv-verified); }
+.pill.high { background: var(--fv-pending-bg); color: var(--fv-pending); }
+.pill.crit { background: var(--fv-critical-bg); color: var(--fv-critical); }
+.cmdbar { display: flex; align-items: center; gap: 8px; margin: -4px 0 14px; flex-wrap: wrap; }
+.cmdbar .sp { flex: 1; }
+
+/* ---------- change detail ---------- */
+.kv { display: grid; grid-template-columns: 170px 1fr 1fr; background: var(--card); border: 1px solid var(--stroke); border-radius: 6px; overflow: hidden; }
+.kv > div { padding: 10px 16px; border-bottom: 1px solid var(--stroke); font-size: 13px; overflow-wrap: anywhere; }
+.kv > div.h { font-size: 12px; color: var(--fv-text-muted); background: var(--card-2); font-weight: 600; }
+.kv > div.k { color: var(--fv-text-muted); }
+.kv > div.bad { color: var(--fv-critical); }
+.kv > div:nth-last-child(-n+3) { border-bottom: 0; }
+.diff { background: var(--card); border: 1px solid var(--stroke); border-radius: 6px; overflow: hidden; }
+.diff .hd { display: grid; grid-template-columns: 1fr 1fr; font-size: 12px; font-weight: 600; color: var(--fv-text-muted); background: var(--card-2); border-bottom: 1px solid var(--stroke); }
+.diff .hd div { padding: 8px 14px; } .diff .hd div + div { border-left: 1px solid var(--stroke); }
+.diff .body { display: grid; grid-template-columns: 1fr 1fr; }
+.diff .col { min-width: 0; }
+.diff .col + .col { border-left: 1px solid var(--stroke); }
+.diff .ln { display: grid; grid-template-columns: 38px 1fr; font-family: var(--fv-font-mono); font-size: 12.5px; line-height: 21px; user-select: text; }
+.diff .ln i { font-style: normal; text-align: right; padding-right: 10px; color: var(--fv-text-subtle); }
+.diff .ln span { white-space: pre; overflow: hidden; text-overflow: ellipsis; padding-right: 10px; }
+.diff .ln.del { background: var(--fv-critical-bg); } .diff .ln.del span { color: var(--fv-critical); }
+.diff .ln.add { background: var(--fv-verified-bg); } .diff .ln.add span { color: var(--fv-verified); }
+.diff .ln.empty { background: repeating-linear-gradient(45deg, transparent 0 6px, var(--hover) 6px 7px); }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 18px; }
+
+/* ---------- lists ---------- */
+.table { background: var(--card); border: 1px solid var(--stroke); border-radius: 6px; overflow: hidden; }
+.tr { display: grid; align-items: center; gap: 12px; padding: 0 16px; min-height: 44px; border-bottom: 1px solid var(--stroke); font-size: 13px; }
+.tr:last-child { border-bottom: 0; }
+.tr.th { min-height: 36px; font-size: 12px; font-weight: 600; color: var(--fv-text-muted); background: var(--card-2); }
+.runs .tr { grid-template-columns: 90px 1.2fr 1fr .8fr .9fr 1fr; }
+.audit .tr { grid-template-columns: 150px 1.2fr 1.6fr 1fr 110px; }
+.files .tr { grid-template-columns: 2.4fr 1fr 1.2fr 1fr; }
+.ellip { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---------- dialog (ContentDialog) ---------- */
+.scrim { position: fixed; inset: 0; background: var(--overlay); display: none; align-items: center; justify-content: center; z-index: 10; }
+.scrim.on { display: flex; animation: fade .12s ease-out; }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+.dialog { width: 460px; max-width: calc(100vw - 32px); background: var(--card); border: 1px solid var(--stroke); border-radius: 8px;
+          box-shadow: var(--shadow-dialog); overflow: hidden; animation: pop .16s cubic-bezier(.1,.9,.2,1); }
+@keyframes pop { from { transform: scale(1.04); opacity: 0; } to { transform: none; opacity: 1; } }
+.dialog .db { padding: 24px; }
+.dialog h3 { margin: 0 0 6px; font-size: 20px; line-height: 28px; font-weight: 600; color: var(--fv-heading); display: flex; align-items: center; gap: 10px; }
+.dialog h3 img { width: 26px; height: 26px; }
+.dialog p { margin: 0 0 16px; color: var(--fv-text-muted); }
+.field { margin-bottom: 12px; }
+.field label { display: block; font-size: 13px; margin-bottom: 6px; }
+.field input { width: 100%; height: 32px; padding: 0 10px; border-radius: 4px; font: inherit; font-size: 14px; color: var(--fv-text);
+               background: var(--card); border: 1px solid var(--stroke); border-bottom: 1px solid var(--fv-text-subtle); outline: none; user-select: text; }
+.field input:focus { border-bottom: 2px solid var(--accent); padding-bottom: 1px; }
+.field .err { color: var(--fv-critical); font-size: 12px; margin-top: 4px; display: none; }
+.dialog .df { padding: 20px 24px; background: var(--win-bg); border-top: 1px solid var(--stroke); display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.toast { position: fixed; right: 16px; bottom: 16px; width: 364px; background: var(--card); border: 1px solid var(--stroke); border-radius: 8px;
+         box-shadow: var(--shadow-dialog); padding: 14px 16px; display: none; gap: 12px; z-index: 20; }
+.toast.on { display: flex; animation: slide .25s cubic-bezier(.1,.9,.2,1); }
+@keyframes slide { from { transform: translateY(20px); opacity: 0; } to { transform: none; opacity: 1; } }
+.toast img { width: 20px; height: 20px; margin-top: 2px; }
+.toast .t1 { font-size: 12px; color: var(--fv-text-muted); }
+.toast b { display: block; font-weight: 600; margin-top: 2px; }
+
+@media (max-width: 980px) {
+  .shell { grid-template-columns: 64px 1fr; }
+  .account div, .navitem .lbl, .navitem .count { display: none; }
+  .account { padding: 12px 8px 14px; justify-content: center; } .avatar { width: 40px; height: 40px; } .avatar img { width: 24px; height: 24px; }
+  .page { padding: 22px 20px 40px; }
+  .layers { grid-template-columns: 1fr; }
+  .hero { grid-template-columns: auto 1fr; } .hero .acts { grid-column: 1 / -1; }
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 20 20"><path d="M3.5 9 10 3.5 16.5 9v7a.5.5 0 0 1-.5.5h-3.5v-5h-5v5H4a.5.5 0 0 1-.5-.5Z"/></symbol>
+  <symbol id="i-review" viewBox="0 0 20 20"><path d="M7.5 3.5h5v2h-5zM6.5 4.5H5.5a1 1 0 0 0-1 1V16a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V5.5a1 1 0 0 0-1-1h-1"/><path d="m7.5 11.2 1.8 1.8 3.4-3.8"/></symbol>
+  <symbol id="i-file" viewBox="0 0 20 20"><path d="M5.5 2.5h6l3.5 3.5v10.5a1 1 0 0 1-1 1H5.5a1 1 0 0 1-1-1v-13a1 1 0 0 1 1-1Z"/><path d="M11.5 2.5V6H15"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 20 20"><path d="M2.5 5.5a1 1 0 0 1 1-1h4l1.5 1.5h7.5a1 1 0 0 1 1 1V15a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1Z"/></symbol>
+  <symbol id="i-verify" viewBox="0 0 20 20"><path d="M16 10a6 6 0 1 1-1.76-4.24"/><path d="M16 3.8v3.4h-3.4"/></symbol>
+  <symbol id="i-audit" viewBox="0 0 20 20"><path d="M6 3.5h8.5a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H6A1.5 1.5 0 0 1 4.5 15V5A1.5 1.5 0 0 1 6 3.5Z"/><path d="M7.5 7.5h5M7.5 10.5h5M7.5 13.5h3"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 20 20"><circle cx="10" cy="10" r="2.5"/><path d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M4.7 15.3l1.4-1.4M13.9 6.1l1.4-1.4"/></symbol>
+  <symbol id="i-search" viewBox="0 0 20 20"><circle cx="8.8" cy="8.8" r="5.3"/><path d="m12.7 12.7 4 4"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 20 20"><path d="m8 5 5 5-5 5"/></symbol>
+  <symbol id="i-ok" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7"/><path d="m7 10.2 2 2 4-4.4"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 20 20"><path d="M8.7 3.8a1.5 1.5 0 0 1 2.6 0l5.6 10a1.5 1.5 0 0 1-1.3 2.2H4.4a1.5 1.5 0 0 1-1.3-2.2Z"/><path d="M10 8v3.5M10 13.9v.1"/></symbol>
+  <symbol id="i-err" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7"/><path d="m7.6 7.6 4.8 4.8M12.4 7.6l-4.8 4.8"/></symbol>
+  <symbol id="i-hash" viewBox="0 0 20 20"><path d="M7.5 3.5 6 16.5M14 3.5l-1.5 13M4 7.5h12.5M3.5 12.5H16"/></symbol>
+  <symbol id="i-key" viewBox="0 0 20 20"><circle cx="6.5" cy="10" r="3"/><path d="M9.5 10h7.5M14.5 10v2.5M17 10v2"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 20 20"><path d="M5.5 13.5V9a4.5 4.5 0 0 1 9 0v4.5l1.5 1.5H4Z"/><path d="M8.5 17h3"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 20 20"><rect x="4.5" y="8.5" width="11" height="8" rx="1.5"/><path d="M7 8.5V6.5a3 3 0 0 1 6 0v2"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 20 20"><path d="M10 4v12M4 10h12"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 20 20"><path d="M7 5.5 4 8.5l3 3"/><path d="M4 8.5h8a4 4 0 0 1 0 8h-2"/></symbol>
+  <symbol id="i-check" viewBox="0 0 20 20"><path d="m4.5 10.5 3.5 3.5 7.5-8"/></symbol>
+  <symbol id="i-up" viewBox="0 0 20 20"><path d="M10 16V4M5 9l5-5 5 5"/></symbol>
+  <symbol id="i-palette" viewBox="0 0 20 20"><path d="M10 3a7 7 0 1 0 0 14c1 0 1.5-.6 1.5-1.4 0-1.2-1-1.6-1-2.6 0-.8.7-1.5 1.5-1.5h1.5A3.5 3.5 0 0 0 17 8c0-2.8-3.1-5-7-5Z"/><circle cx="6.5" cy="9" r=".8"/><circle cx="9" cy="6.3" r=".8"/><circle cx="12.4" cy="6.6" r=".8"/></symbol>
+  <symbol id="i-min" viewBox="0 0 10 10"><path d="M0 5h10"/></symbol>
+  <symbol id="i-max" viewBox="0 0 10 10"><rect x=".5" y=".5" width="9" height="9" rx="1.5"/></symbol>
+  <symbol id="i-close" viewBox="0 0 10 10"><path d="m0 0 10 10M10 0 0 10"/></symbol>
+</svg>
+
+<header class="titlebar">
+  <img src="../design/logo-mark.svg" alt="" id="tbLogo">
+  <span class="name">FileVow</span>
+  <span class="sp"></span>
+  <label class="search"><svg class="i"><use href="#i-search"/></svg><input placeholder="Search files, changes and settings" aria-label="Search"></label>
+  <span class="sp"></span>
+  <div class="wincontrols" aria-hidden="true">
+    <button title="Minimize"><svg class="i"><use href="#i-min"/></svg></button>
+    <button title="Maximize"><svg class="i"><use href="#i-max"/></svg></button>
+    <button class="close" title="Close"><svg class="i"><use href="#i-close"/></svg></button>
+  </div>
+</header>
+
+<div class="shell">
+  <nav aria-label="Main">
+    <div class="account">
+      <div class="avatar"><img src="../design/logo-mark-reversed.svg" alt=""></div>
+      <div><b>Administrator</b><span>WEB01 · Agent running</span></div>
+    </div>
+    <button class="navitem sel" data-page="home"><svg class="i"><use href="#i-home"/></svg><span class="lbl">Home</span></button>
+    <button class="navitem" data-page="review"><svg class="i"><use href="#i-review"/></svg><span class="lbl">Review changes</span><span class="count" id="navCount">4</span></button>
+    <button class="navitem" data-page="files"><svg class="i"><use href="#i-file"/></svg><span class="lbl">Protected files</span></button>
+    <button class="navitem" data-page="folders"><svg class="i"><use href="#i-folder"/></svg><span class="lbl">Monitored folders</span></button>
+    <button class="navitem" data-page="runs"><svg class="i"><use href="#i-verify"/></svg><span class="lbl">Verification history</span></button>
+    <button class="navitem" data-page="audit"><svg class="i"><use href="#i-audit"/></svg><span class="lbl">Audit log</span></button>
+    <div class="grow"></div>
+    <button class="navitem" data-page="settings"><svg class="i"><use href="#i-settings"/></svg><span class="lbl">Settings</span></button>
+  </nav>
+
+  <main id="main">
+
+    <!-- HOME -->
+    <section class="page on" id="p-home">
+      <h1 class="ptitle">Home</h1>
+      <div class="hero warn" id="hero">
+        <div class="badge-ic"><svg class="i" id="heroIc"><use href="#i-warn"/></svg></div>
+        <div>
+          <h1 id="heroTitle">Action needed</h1>
+          <p id="heroText">1 critical issue and 3 changes are waiting for your review.</p>
+          <p class="subtle" id="lastRun" style="margin-top:6px">Last verified today at 10:30 · Next check in 13 minutes</p>
+          <div class="progress" id="prog"><div></div></div>
+        </div>
+        <div class="acts">
+          <button class="btn" id="verifyBtn"><svg class="i"><use href="#i-verify"/></svg>Verify now</button>
+          <button class="btn primary" id="heroReview" data-goto="review">Review changes</button>
+        </div>
+      </div>
+
+      <h2 class="sec">Verification layers</h2>
+      <div class="layers">
+        <div class="layer"><div class="top"><svg class="i"><use href="#i-hash"/></svg>File contents</div>
+          <div class="n" id="l1n">1,280 / 1,284</div><div class="subtle">SHA-256 fingerprints match</div>
+          <div class="st bad" id="l1s" style="margin-top:8px"><svg class="i"><use href="#i-warn"/></svg><span>4 files differ</span></div></div>
+        <div class="layer"><div class="top"><svg class="i"><use href="#i-key"/></svg>Signatures</div>
+          <div class="n" id="l2n">1,283 / 1,284</div><div class="subtle">RSA-3072 records verified</div>
+          <div class="st bad" id="l2s" style="margin-top:8px"><svg class="i"><use href="#i-err"/></svg><span>1 record tampered</span></div></div>
+        <div class="layer"><div class="top"><svg class="i"><use href="#i-lock"/></svg>Mirror vault</div>
+          <div class="n">1,284 / 1,284</div><div class="subtle">Encrypted copies intact</div>
+          <div class="st" style="margin-top:8px"><svg class="i"><use href="#i-ok"/></svg><span>All copies verified</span></div></div>
+      </div>
+
+      <h2 class="sec">Needs attention</h2>
+      <div id="homeList"></div>
+
+      <h2 class="sec">Quick settings</h2>
+      <div class="row"><svg class="i"><use href="#i-verify"/></svg><div class="txt"><b>Automatic verification</b><span>Checks every protected file every 15 minutes. Changes are never accepted automatically.</span></div>
+        <label class="toggle"><span class="muted">On</span><input type="checkbox" checked></label></div>
+      <div class="row"><svg class="i"><use href="#i-bell"/></svg><div class="txt"><b>Real-time alerts</b><span>Notify me within seconds when a protected file changes</span></div>
+        <label class="toggle"><span class="muted">On</span><input type="checkbox" checked></label></div>
+    </section>
+
+    <!-- REVIEW QUEUE -->
+    <section class="page" id="p-review">
+      <h1 class="ptitle">Review changes</h1>
+      <div class="cmdbar">
+        <select class="sel" aria-label="Filter"><option>All severities</option><option>Critical</option><option>High</option><option>Medium</option></select>
+        <select class="sel" aria-label="Folder"><option>All folders</option><option>C:\inetpub\wwwroot</option><option>C:\Windows\System32\drivers\etc</option></select>
+        <span class="sp"></span><span class="subtle" id="reviewCount"></span>
+      </div>
+      <div id="reviewList"></div>
+      <div class="infobar ok" id="allClear" style="display:none"><svg class="i"><use href="#i-ok"/></svg><div><b>You're all caught up.</b>No changes are waiting for review.</div></div>
+    </section>
+
+    <!-- CHANGE DETAIL -->
+    <section class="page" id="p-detail">
+      <h1 class="ptitle"><span class="crumb" data-goto="review">Review changes</span><svg class="i"><use href="#i-chev"/></svg><span id="dTitle">index.html</span></h1>
+      <div id="dInfo"></div>
+      <h2 class="sec" style="margin-top:6px">What changed</h2>
+      <div class="kv" id="dKv"></div>
+      <h2 class="sec">Content comparison</h2>
+      <div class="diff" id="dDiff"></div>
+      <div class="actions">
+        <button class="btn primary" id="aAccept"><svg class="i"><use href="#i-check"/></svg>Accept change</button>
+        <button class="btn" id="aRestore"><svg class="i"><use href="#i-undo"/></svg>Restore approved version</button>
+        <button class="btn" id="aReject">Mark as false positive</button>
+        <button class="btn danger" id="aEscalate"><svg class="i"><use href="#i-up"/></svg>Escalate</button>
+      </div>
+      <p class="subtle" style="margin-top:10px">Accepting creates a new signed version and needs your password, an authenticator code and the signing-key passphrase. Restoring keeps a copy of the current file as evidence.</p>
+    </section>
+
+    <!-- FILES -->
+    <section class="page" id="p-files">
+      <h1 class="ptitle">Protected files</h1>
+      <div class="cmdbar"><select class="sel"><option>All statuses</option><option>Verified</option><option>Needs review</option></select><span class="sp"></span><span class="subtle">1,284 files · 3 folders</span></div>
+      <div class="table files">
+        <div class="tr th"><div>File</div><div>Status</div><div>SHA-256</div><div>Last verified</div></div>
+        <div class="tr"><div class="mono ellip">C:\inetpub\wwwroot\about.html</div><div><span class="pill ok"><svg class="i"><use href="#i-check"/></svg>Verified</span></div><div class="mono">9f86d0…0a08</div><div class="muted">10:30</div></div>
+        <div class="tr"><div class="mono ellip">C:\inetpub\wwwroot\contact.html</div><div><span class="pill ok"><svg class="i"><use href="#i-check"/></svg>Verified</span></div><div class="mono">3b1e44…c71d</div><div class="muted">10:30</div></div>
+        <div class="tr"><div class="mono ellip">C:\inetpub\wwwroot\css\site.css</div><div><span class="pill ok"><svg class="i"><use href="#i-check"/></svg>Verified</span></div><div class="mono">c08f2a…91be</div><div class="muted">10:30</div></div>
+        <div class="tr"><div class="mono ellip">C:\inetpub\wwwroot\web.config</div><div><span class="pill ok"><svg class="i"><use href="#i-check"/></svg>Verified</span></div><div class="mono">e41d77…02aa</div><div class="muted">10:30</div></div>
+        <div class="tr"><div class="mono ellip">C:\Windows\System32\drivers\etc\hosts</div><div><span class="pill ok"><svg class="i"><use href="#i-check"/></svg>Verified</span></div><div class="mono">7d5c9e…f3a1</div><div class="muted">10:30</div></div>
+        <div class="tr"><div class="mono ellip">C:\FileVow\config\config.yaml</div><div><span class="pill ok"><svg class="i"><use href="#i-check"/></svg>Verified</span></div><div class="mono">aa20b5…6e19</div><div class="muted">10:30</div></div>
+      </div>
+    </section>
+
+    <!-- FOLDERS -->
+    <section class="page" id="p-folders">
+      <h1 class="ptitle">Monitored folders</h1>
+      <div class="cmdbar"><button class="btn primary"><svg class="i"><use href="#i-plus"/></svg>Add folder</button></div>
+      <div class="row"><svg class="i"><use href="#i-folder"/></svg><div class="txt"><b class="mono" style="font-size:13.5px">C:\inetpub\wwwroot</b><span>1,262 files · includes subfolders · excludes *.log, *.tmp</span></div>
+        <select class="sel" aria-label="Severity"><option>High</option><option>Critical</option><option>Medium</option></select><label class="toggle"><input type="checkbox" checked aria-label="Enabled"></label></div>
+      <div class="row"><svg class="i"><use href="#i-folder"/></svg><div class="txt"><b class="mono" style="font-size:13.5px">C:\Windows\System32\drivers\etc</b><span>6 files · hosts, networks, protocol, services</span></div>
+        <select class="sel" aria-label="Severity"><option>Critical</option><option>High</option></select><label class="toggle"><input type="checkbox" checked aria-label="Enabled"></label></div>
+      <div class="row"><svg class="i"><use href="#i-folder"/></svg><div class="txt"><b class="mono" style="font-size:13.5px">C:\FileVow</b><span>16 files · FileVow protects its own code and configuration</span></div>
+        <select class="sel" aria-label="Severity"><option>Critical</option></select><label class="toggle"><input type="checkbox" checked disabled aria-label="Enabled"></label></div>
+    </section>
+
+    <!-- RUNS -->
+    <section class="page" id="p-runs">
+      <h1 class="ptitle">Verification history</h1>
+      <div class="row"><svg class="i"><use href="#i-verify"/></svg><div class="txt"><b>Schedule</b><span>Every 15 minutes, plus at start-up. Reports are signed with the agent key.</span></div><select class="sel" aria-label="Schedule"><option>Every 15 minutes</option></select></div>
+      <h2 class="sec">Recent runs</h2>
+      <div class="table runs" id="runsTable">
+        <div class="tr th"><div>Run</div><div>Started</div><div>Result</div><div>Files</div><div>Duration</div><div>Report</div></div>
+      </div>
+    </section>
+
+    <!-- AUDIT -->
+    <section class="page" id="p-audit">
+      <h1 class="ptitle">Audit log</h1>
+      <div class="cmdbar"><button class="btn" id="chainBtn"><svg class="i"><use href="#i-lock"/></svg>Verify chain</button><span class="sp"></span><span class="subtle">Every entry is linked to the previous one by a SHA-256 hash</span></div>
+      <div id="chainRes"></div>
+      <div class="table audit">
+        <div class="tr th"><div>Time</div><div>Action</div><div>Target</div><div>By</div><div>Entry hash</div></div>
+        <div class="tr"><div class="muted">Today 10:31</div><div>Record tampered</div><div class="mono ellip">wwwroot\config.php</div><div>System</div><div class="mono">0c9a14…</div></div>
+        <div class="tr"><div class="muted">Today 10:30</div><div>Verification run #4182</div><div class="muted">1,284 files</div><div>System</div><div class="mono">52bd77…</div></div>
+        <div class="tr"><div class="muted">Today 09:12</div><div>Signed in</div><div class="muted">127.0.0.1</div><div>Administrator</div><div class="mono">c91e03…</div></div>
+        <div class="tr"><div class="muted">Yesterday 18:40</div><div>Change accepted</div><div class="mono ellip">wwwroot\js\menu.js · v4</div><div>Administrator</div><div class="mono">7a3f58…</div></div>
+        <div class="tr"><div class="muted">Yesterday 18:39</div><div>Signed in</div><div class="muted">127.0.0.1</div><div>Administrator</div><div class="mono">19be2d…</div></div>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="page" id="p-settings">
+      <h1 class="ptitle">Settings</h1>
+      <h2 class="sec" style="margin-top:0">Security</h2>
+      <div class="row"><svg class="i"><use href="#i-key"/></svg><div class="txt"><b>Baseline signing key</b><span class="mono" style="font-size:12px">RSA-3072 · fingerprint a1b2c3d4e5f60718…9c2e</span></div><button class="btn">Rotate key</button></div>
+      <div class="row"><svg class="i"><use href="#i-lock"/></svg><div class="txt"><b>Two-step verification</b><span>Authenticator app codes are required to sign in and to accept or restore changes</span></div><span class="pill ok"><svg class="i"><use href="#i-check"/></svg>On</span></div>
+      <h2 class="sec">Notifications</h2>
+      <div class="row"><svg class="i"><use href="#i-bell"/></svg><div class="txt"><b>Windows notifications</b><span>Show a notification for high and critical changes</span></div><label class="toggle"><span class="muted">On</span><input type="checkbox" checked></label></div>
+      <div class="row"><svg class="i"><use href="#i-bell"/></svg><div class="txt"><b>Email alerts</b><span>security-team@example.com · critical and high</span></div><button class="btn">Edit</button></div>
+      <h2 class="sec">Appearance</h2>
+      <div class="row"><svg class="i"><use href="#i-palette"/></svg><div class="txt"><b>App theme</b><span>Follow Windows, or choose light or dark</span></div>
+        <select class="sel" id="themeSel" aria-label="App theme"><option value="system">Use system setting</option><option value="light">Light</option><option value="dark">Dark</option></select></div>
+      <h2 class="sec">About</h2>
+      <div class="row"><img src="../design/logo-mark.svg" alt="" style="width:20px;height:20px" id="aboutLogo"><div class="txt"><b>FileVow 1.0</b><span>Three-layer file integrity monitoring · SHA-256 · RSA-PSS · AES-256-GCM</span></div></div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Confirm-it's-you dialog -->
+<div class="scrim" id="scrim" role="dialog" aria-modal="true" aria-labelledby="dlgTitle">
+  <div class="dialog">
+    <div class="db">
+      <h3 id="dlgTitle"><img src="../design/logo-mark.svg" alt="" id="dlgLogo">Confirm it's you</h3>
+      <p id="dlgText">Accepting this change creates version 4 of index.html and signs it with your baseline key.</p>
+      <div class="field"><label for="f1">Password</label><input id="f1" type="password" autocomplete="current-password"></div>
+      <div class="field"><label for="f2">Authenticator code</label><input id="f2" inputmode="numeric" maxlength="6" placeholder="6-digit code"></div>
+      <div class="field" id="fKey"><label for="f3">Signing-key passphrase</label><input id="f3" type="password"></div>
+      <div class="field"><label for="f4">Reason</label><input id="f4" placeholder="Release 2.4 deployment, ticket CHG-1182"><div class="err" id="dlgErr">Fill in every field to continue.</div></div>
+    </div>
+    <div class="df"><button class="btn primary" id="dlgOk">Accept</button><button class="btn" id="dlgCancel">Cancel</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"><img src="../design/favicon.svg" alt=""><div><div class="t1">FileVow</div><b id="toastTitle"></b><div class="muted" id="toastText" style="font-size:13px"></div></div></div>
+
+<script>
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const ic = (id, cls = "i") => `<svg class="${cls}"><use href="#i-${id}"/></svg>`;
+
+/* Demo data. Kept deliberately harmless: real malware-like strings here would be flagged by antivirus. */
+const changes = [
+  { id: 921, file: "config.php", path: "C:\\inetpub\\wwwroot\\config.php", sev: "crit", type: "Record tampered",
+    detail: "The stored fingerprint was edited, so its RSA signature no longer verifies", time: "10:31",
+    exp: "4be1f0a93c…6d02", obs: "7c21d8e4b0…e9f0", size: ["2,048 B", "2,060 B"], ver: 6,
+    diff: [["<?php", "<?php"], ["$db_host = 'localhost';", "$db_host = '203.0.113.50';", "mod"], ["$db_user = 'app';", "$db_user = 'app';"],
+           ["define('DEBUG', false);", "define('DEBUG', false);"]] },
+  { id: 918, file: "index.html", path: "C:\\inetpub\\wwwroot\\index.html", sev: "high", type: "File modified",
+    detail: "Content no longer matches the approved SHA-256 fingerprint", time: "10:30",
+    exp: "9f86d08188…0a08", obs: "a1c3e5f7d9…77b2", size: ["5,120 B", "5,388 B"], ver: 3,
+    diff: [["<head>", "<head>"], ["  <title>Welcome</title>", "  <title>Welcome</title>"], [null, "  <link rel=\"preconnect\" href=\"https://stats.example.net\">", "add"],
+           ["</head>", "</head>"], ["<body>", "<body>"], ["  <h1>Hello</h1>", "  <h1>Hello, visitor</h1>", "mod"], ["</body>", "</body>"]] },
+  { id: 919, file: "app.js", path: "C:\\inetpub\\wwwroot\\js\\app.js", sev: "high", type: "File modified",
+    detail: "Content no longer matches the approved SHA-256 fingerprint", time: "10:30",
+    exp: "5d0e2c91aa…1a4c", obs: "e8b7f1d034…92cd", size: ["14,880 B", "14,902 B"], ver: 8,
+    diff: [["export function init() {", "export function init() {"], ["  loadMenu();", "  loadMenu();"], ["  trackPage();", null, "del"], [null, "  trackPage({ anon: true });", "add"], ["}", "}"]] },
+  { id: 920, file: "report.php", path: "C:\\inetpub\\wwwroot\\uploads\\report.php", sev: "high", type: "Unknown file created",
+    detail: "A new script file appeared in a monitored folder", time: "10:29",
+    exp: "—", obs: "f00dbab3c4…11e7", size: ["—", "862 B"], ver: 0,
+    diff: [[null, "<?php // uploaded at 10:29, 862 bytes, not in any approved release", "add"]] },
+];
+let current = null, dlgMode = "accept";
+
+function sevIcon(s) { return s === "crit" ? ic("err", "i sev crit") : ic("warn", "i sev high"); }
+function rowHTML(c) {
+  return `<div class="row click" data-open="${c.id}" tabindex="0">${sevIcon(c.sev)}
+    <div class="txt"><b>${c.type} — <span class="mono" style="display:inline;font-size:13px;color:var(--fv-text)">${c.file}</span></b><span>${c.detail}</span></div>
+    <span class="meta">${c.time}</span>${ic("chev", "i chev")}</div>`;
+}
+function render() {
+  const n = changes.length, crit = changes.filter(c => c.sev === "crit").length;
+  $("#homeList").innerHTML = n ? changes.slice(0, 3).map(rowHTML).join("") +
+      (n > 3 ? `<div class="row click" data-goto="review">${ic("review")}<div class="txt"><b>See all ${n} changes</b><span>Open the review queue</span></div>${ic("chev", "i chev")}</div>` : "")
+    : `<div class="row">${ic("ok", "i sev ok")}<div class="txt"><b>Nothing needs your attention</b><span>Every protected file matches its signed, approved version</span></div></div>`;
+  $("#reviewList").innerHTML = changes.map(rowHTML).join("");
+  $("#allClear").style.display = n ? "none" : "flex";
+  $("#reviewCount").textContent = n ? `${n} waiting · oldest ${changes[changes.length - 1].time}` : "";
+  const nc = $("#navCount"); nc.textContent = n; nc.style.visibility = n ? "visible" : "hidden"; nc.className = "count" + (crit ? "" : " amber");
+  const hero = $("#hero");
+  if (n) {
+    hero.className = "hero warn"; $("#heroIc").innerHTML = `<use href="#i-warn"/>`; $("#heroTitle").textContent = "Action needed";
+    $("#heroText").textContent = crit ? `${crit} critical issue${crit > 1 ? "s" : ""} and ${n - crit} change${n - crit === 1 ? "" : "s"} waiting for your review.` : `${n} change${n > 1 ? "s" : ""} waiting for your review.`;
+    $("#heroReview").style.display = "";
+  } else {
+    hero.className = "hero ok"; $("#heroIc").innerHTML = `<use href="#i-ok"/>`; $("#heroTitle").textContent = "Your files are protected";
+    $("#heroText").textContent = "All 1,284 files match their signed, approved versions.";
+    $("#heroReview").style.display = "none";
+  }
+  const differ = n;
+  $("#l1n").textContent = `${(1284 - differ).toLocaleString()} / 1,284`;
+  $("#l1s").className = "st" + (differ ? " bad" : "");
+  $("#l1s").innerHTML = differ ? `${ic("warn")}<span>${differ} file${differ > 1 ? "s" : ""} differ</span>` : `${ic("ok")}<span>All fingerprints match</span>`;
+  $("#l2n").textContent = `${(1284 - crit).toLocaleString()} / 1,284`;
+  $("#l2s").className = "st" + (crit ? " bad" : "");
+  $("#l2s").innerHTML = crit ? `${ic("err")}<span>${crit} record tampered</span>` : `${ic("ok")}<span>All signatures valid</span>`;
+}
+
+function go(page) {
+  $$(".page").forEach(p => p.classList.toggle("on", p.id === "p-" + page));
+  $$(".navitem").forEach(b => b.classList.toggle("sel", b.dataset.page === page || (page === "detail" && b.dataset.page === "review")));
+  $("#main").scrollTop = 0;
+}
+const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+function openChange(id) {
+  current = changes.find(c => c.id == id); if (!current) return;
+  const c = current;
+  $("#dTitle").textContent = c.file;
+  const box = { crit: ["crit", "err", "Critical: the integrity record was altered.", "Someone changed the stored fingerprint in the database. FileVow kept the approved copy in the vault."],
+                high: ["warn", "warn", c.type === "Unknown file created" ? "A new file appeared." : "This file changed since it was approved.", "Review the difference below, then accept it if it was expected or restore the approved version."] }[c.sev];
+  $("#dInfo").innerHTML = `<div class="infobar ${box[0]}">${ic(box[1])}<div class="grow"><b>${box[2]}</b>${box[3]}</div></div>`;
+  $("#dKv").innerHTML = `<div class="h">Property</div><div class="h">Approved (version ${c.ver || "—"})</div><div class="h">Now on disk</div>
+    <div class="k">Path</div><div class="mono" style="grid-column: span 2">${c.path}</div>
+    <div class="k">SHA-256</div><div class="mono">${c.exp}</div><div class="mono bad">${c.obs}</div>
+    <div class="k">Size</div><div>${c.size[0]}</div><div class="${c.size[0] !== c.size[1] ? "bad" : ""}">${c.size[1]}</div>
+    <div class="k">Signature</div><div>${c.ver ? "Valid · key a1b2c3d4" : "No record"}</div><div class="${c.sev === "crit" ? "bad" : ""}">${c.sev === "crit" ? "Does not verify" : c.ver ? "Valid" : "—"}</div>
+    <div class="k">Detected</div><div class="muted">—</div><div>Today ${c.time} · run #4182</div>`;
+  const L = [], R = []; let a = 1, b = 1;
+  c.diff.forEach(([o, n, k]) => {
+    L.push(o === null ? `<div class="ln empty"><i></i><span></span></div>` : `<div class="ln ${k === "del" || k === "mod" ? "del" : ""}"><i>${a++}</i><span>${esc(o)}</span></div>`);
+    R.push(n === null ? `<div class="ln empty"><i></i><span></span></div>` : `<div class="ln ${k === "add" || k === "mod" ? "add" : ""}"><i>${b++}</i><span>${esc(n)}</span></div>`);
+  });
+  $("#dDiff").innerHTML = `<div class="hd"><div>Approved copy from the mirror vault</div><div>Current file (saved as evidence)</div></div>
+    <div class="body"><div class="col">${L.join("")}</div><div class="col">${R.join("")}</div></div>`;
+  $("#aRestore").style.display = c.ver ? "" : "none";
+  $("#aAccept").innerHTML = ic("check") + (c.ver ? "Accept change" : "Approve and protect file");
+  go("detail");
+}
+
+function openDialog(mode) {
+  dlgMode = mode; const c = current;
+  $("#fKey").style.display = mode === "accept" ? "" : "none";
+  $("#dlgOk").textContent = mode === "accept" ? "Accept" : "Restore";
+  $("#dlgText").textContent = mode === "accept"
+    ? (c.ver ? `Accepting this change creates version ${c.ver + 1} of ${c.file} and signs it with your baseline key.` : `This adds ${c.file} as a protected file, version 1, signed with your baseline key.`)
+    : `FileVow saves the current ${c.file} as evidence, then puts back approved version ${c.ver} from the encrypted mirror.`;
+  ["#f1", "#f2", "#f3", "#f4"].forEach(s => $(s).value = ""); $("#dlgErr").style.display = "none";
+  $("#scrim").classList.add("on"); setTimeout(() => $("#f1").focus(), 50);
+}
+function closeDialog() { $("#scrim").classList.remove("on"); }
+function resolve(msgTitle, msgText) {
+  const i = changes.indexOf(current); if (i >= 0) changes.splice(i, 1);
+  render(); go(changes.length ? "review" : "home"); toast(msgTitle, msgText);
+}
+function toast(t, m) {
+  $("#toastTitle").textContent = t; $("#toastText").textContent = m;
+  const el = $("#toast"); el.classList.remove("on"); void el.offsetWidth; el.classList.add("on");
+  clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("on"), 4200);
+}
+
+document.addEventListener("click", e => {
+  const nav = e.target.closest("[data-page]"); if (nav) return go(nav.dataset.page);
+  const g = e.target.closest("[data-goto]"); if (g) return go(g.dataset.goto);
+  const o = e.target.closest("[data-open]"); if (o) return openChange(o.dataset.open);
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "Enter" && e.target.matches("[data-open]")) openChange(e.target.dataset.open);
+  if (e.key === "Escape") closeDialog();
+});
+$("#aAccept").onclick = () => openDialog("accept");
+$("#aRestore").onclick = () => openDialog("restore");
+$("#aReject").onclick = () => resolve("Marked as false positive", `${current.file} will be checked again on the next run.`);
+$("#aEscalate").onclick = () => toast("Escalated", `The security team was notified about ${current.file}.`);
+$("#dlgCancel").onclick = closeDialog;
+$("#scrim").addEventListener("click", e => { if (e.target.id === "scrim") closeDialog(); });
+$("#dlgOk").onclick = () => {
+  const need = ["#f1", "#f2", "#f4"].concat(dlgMode === "accept" ? ["#f3"] : []);
+  if (need.some(s => !$(s).value.trim())) { $("#dlgErr").style.display = "block"; return; }
+  closeDialog();
+  const c = current;
+  if (dlgMode === "accept") resolve("Change accepted", c.ver ? `${c.file} is now protected as version ${c.ver + 1}.` : `${c.file} is now protected.`);
+  else resolve("File restored", `${c.file} matches approved version ${c.ver} again.`);
+};
+["#f1", "#f2", "#f3", "#f4"].forEach(s => $(s).addEventListener("input", () => $("#dlgErr").style.display = "none"));
+
+$("#verifyBtn").onclick = () => {
+  const p = $("#prog"), bar = p.firstElementChild, btn = $("#verifyBtn"); btn.disabled = true;
+  p.classList.add("on"); bar.style.width = "0"; let w = 0;
+  $("#lastRun").textContent = "Verifying 1,284 files…";
+  const t = setInterval(() => {
+    w += 7 + Math.random() * 9; bar.style.width = Math.min(w, 100) + "%";
+    if (w >= 100) {
+      clearInterval(t); setTimeout(() => { p.classList.remove("on"); btn.disabled = false; }, 250);
+      const now = new Date(); const hh = String(now.getHours()).padStart(2, "0"), mm = String(now.getMinutes()).padStart(2, "0");
+      $("#lastRun").textContent = `Last verified today at ${hh}:${mm} · Next check in 15 minutes`;
+      toast("Verification complete", changes.length ? `${changes.length} item${changes.length > 1 ? "s" : ""} still need review.` : "All 1,284 files verified.");
+    }
+  }, 120);
+};
+
+const runs = [["#4182", "Today 10:30", "crit", "4 issues", "1,284", "9.4 s"], ["#4181", "Today 10:15", "ok", "No changes", "1,284", "9.1 s"],
+              ["#4180", "Today 10:00", "ok", "No changes", "1,284", "9.3 s"], ["#4179", "Today 09:45", "ok", "No changes", "1,284", "9.0 s"],
+              ["#4178", "Today 09:30", "ok", "No changes", "1,284", "9.2 s"]];
+$("#runsTable").insertAdjacentHTML("beforeend", runs.map(r => `<div class="tr"><div class="mono">${r[0]}</div><div class="muted">${r[1]}</div>
+  <div><span class="pill ${r[2]}">${ic(r[2] === "ok" ? "check" : "warn")}${r[3]}</span></div><div>${r[4]}</div><div class="muted">${r[5]}</div>
+  <div class="muted" style="display:flex;align-items:center;gap:6px">${ic("check")}Signature valid</div></div>`).join(""));
+
+$("#chainBtn").onclick = () => {
+  $("#chainRes").innerHTML = `<div class="infobar ok">${ic("ok")}<div><b>Audit chain intact.</b>1,833 entries checked · latest checkpoint signed today at 10:30 · no gaps or edits found.</div></div>`;
+};
+
+const themeSel = $("#themeSel");
+function applyTheme(v) {
+  if (v === "system") document.documentElement.removeAttribute("data-theme"); else document.documentElement.setAttribute("data-theme", v);
+  const dark = v === "dark" || (v === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
+  ["#tbLogo", "#aboutLogo", "#dlgLogo"].forEach(s => $(s).src = dark ? "../design/logo-mark-reversed.svg" : "../design/logo-mark.svg");
+  try { localStorage.setItem("fv-theme", v); } catch (e) {}
+}
+themeSel.onchange = () => applyTheme(themeSel.value);
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => applyTheme(themeSel.value));
+let saved = "system"; try { saved = localStorage.getItem("fv-theme") || "system"; } catch (e) {}
+themeSel.value = saved; applyTheme(saved);
+
+render();
+</script>
+</body>
+</html>

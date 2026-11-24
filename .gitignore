@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+dist/
+
+# FileVow runtime data and secrets: never commit these.
+# (Real data lives under FILEVOW_HOME, outside the repository.)
+.env
+*.pem
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+secrets.json
+
+# Editors and OS
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
+
+# Local development environment
+web/backend/.dev-home/
+
+# Release binaries are published with the website, not committed
+web/website/downloads/*.exe
+web/website/downloads/*.sha256
