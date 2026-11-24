@@ -191,7 +191,7 @@ access. Close the program and click Verify now.
 better. Folders that change constantly, like browser caches, create a lot of noise.
 
 **Where is my data?** In `%LOCALAPPDATA%\FileVow` (database, encrypted backups, keys and
-logs). FileVow's own encryption keys are in the Windows Credential Manager. Nothing is
+logs). FileVow's own encryption keys are in a file Windows encrypts for your account (DPAPI). Nothing is
 sent anywhere unless you add a notification channel.
 
 **How do I uninstall?** Settings → Apps → Installed apps → FileVow → Uninstall. Your

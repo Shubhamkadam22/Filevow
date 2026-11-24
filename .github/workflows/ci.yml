@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   backend:
-    runs-on: windows-latest # FileVow targets Windows (ACLs, Credential Manager)
+    runs-on: windows-latest # FileVow targets Windows (ACLs, DPAPI)
     timeout-minutes: 30
     defaults:
       run:

@@ -61,7 +61,7 @@
           <tr><td>Your username, a copy of your e-mail address and an encrypted sign-in token</td><td>To keep you signed in on this computer and send the daily marker</td><td>FileVow's database, the token encrypted</td></tr>
         </tbody>
       </table>
-      <p>By default this is the <code>%LOCALAPPDATA%\FileVow</code> folder of your Windows account. FileVow's own encryption keys are kept in the Windows Credential Manager. None of this is sent to us.</p>
+      <p>By default this is the <code>%LOCALAPPDATA%\FileVow</code> folder of your Windows account. FileVow's own encryption keys are kept in a file that Windows encrypts for your account (DPAPI), so other Windows users can't read it. None of this is sent to us.</p>
 
       <h2>4. Service providers</h2>
       <ul>

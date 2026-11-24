@@ -463,7 +463,7 @@ def desktop(
     """Open FileVow as a desktop app (starts monitoring if it is not running yet)."""
     from logging.handlers import RotatingFileHandler
 
-    from filevow.desktop import desktop_settings, run_desktop
+    from filevow.desktop import desktop_settings, run_desktop, show_error
 
     base = _context(ctx)
     app_ctx = AppContext(desktop_settings(base.settings), base.secrets)
@@ -476,9 +476,12 @@ def desktop(
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
         handlers=[handler],
     )
+    log_file = app_ctx.settings.log_dir / "filevow.log"
     try:
         run_desktop(app_ctx, background=background, keep_running=keep_running)
-    except RuntimeError as exc:
+    except Exception as exc:
+        logging.getLogger("filevow.desktop").exception("FileVow could not start")
+        show_error(f"FileVow could not start.\n\n{exc}\n\nDetails are in:\n{log_file}")
         raise _fail(str(exc)) from exc
 
 

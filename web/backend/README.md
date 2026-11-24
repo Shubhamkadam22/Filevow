@@ -81,7 +81,7 @@ All settings are environment variables (or a `.env` file, see `.env.example`) pr
 |---|---|---|
 | `FILEVOW_HOME` | `%LOCALAPPDATA%\FileVow` | Data, vault, keys and logs |
 | `FILEVOW_DATABASE_URL` | SQLite in `HOME\data` | e.g. `postgresql+psycopg://user:pass@host/filevow` (install `.[postgres]`) |
-| `FILEVOW_KEY_STORAGE` | `keyring` | `keyring` = Windows Credential Manager; `file` = JSON file for dev/Linux servers |
+| `FILEVOW_KEY_STORAGE` | `dpapi` on Windows | `dpapi` = file encrypted by Windows for this user; `keyring` = OS keyring (Linux/macOS); `file` = JSON for dev |
 | `FILEVOW_ALLOW_REGISTRATION` | `true` | Let people create accounts on the sign-in screen |
 | `FILEVOW_BROWSE_ROOTS` | `[]` | Limit the folder browser, e.g. `["C:/Users"]` (empty = all drives) |
 | `FILEVOW_VERIFICATION_INTERVAL_MINUTES` | `15` | Scheduled run interval |
@@ -98,7 +98,7 @@ API documentation is served at `/api/v1/docs` (OpenAPI).
 ```
 src/filevow/
   config.py        settings (pydantic-settings)
-  secrets.py       Credential Manager / file secret stores
+  secrets.py       DPAPI / keyring / file secret stores
   core/            hashing, paths, metadata, file walker
   crypto/          canonical JSON, RSA-PSS keys and signatures, AES-256-GCM
   db/              SQLAlchemy models, enums, sessions, Alembic migrations

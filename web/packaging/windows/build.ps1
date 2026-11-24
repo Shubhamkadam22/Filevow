@@ -72,10 +72,29 @@ $env:FILEVOW_DASHBOARD_DIST = Join-Path $frontend "dist"
 if ($LASTEXITCODE) { throw "PyInstaller failed" }
 
 $exe = Join-Path $build "dist\FileVow\FileVow.exe"
-Step "Smoke test: FileVow.exe --help"
-$help = & $exe --help 2>&1 | Out-String
-# A windowed exe prints nothing to this console; a non-zero exit code means it crashed.
-if ($LASTEXITCODE) { throw "FileVow.exe exited with code $LASTEXITCODE`n$help" }
+Step "Smoke test: start FileVow.exe on an empty data folder, like a new user's PC"
+# Uses the real Windows secret store (no test settings), so a build that can't start never ships.
+$smokeHome = Join-Path $build "smoke-home"
+Remove-Item $smokeHome -Recurse -Force -ErrorAction SilentlyContinue
+$env:FILEVOW_HOME = $smokeHome
+$env:FILEVOW_API_PORT = "8499"
+$proc = Start-Process $exe -ArgumentList "desktop", "--background" -PassThru
+$healthy = $false
+for ($i = 0; $i -lt 90 -and -not $proc.HasExited; $i++) {
+  try {
+    if ((Invoke-RestMethod "http://127.0.0.1:8499/api/v1/health" -TimeoutSec 2).status -eq "ok") { $healthy = $true; break }
+  } catch { Start-Sleep -Milliseconds 500 }
+}
+if (-not $proc.HasExited) { Stop-Process -Id $proc.Id -Force }
+Remove-Item Env:FILEVOW_HOME, Env:FILEVOW_API_PORT
+if (-not $healthy) {
+  $log = Join-Path $smokeHome "logs\filevow.log"
+  if (Test-Path $log) { Get-Content $log -Tail 60 | Write-Host }
+  throw "FileVow.exe did not start (log above)"
+}
+Write-Host "FileVow.exe started and answered on its port."
+Start-Sleep -Seconds 1
+Remove-Item $smokeHome -Recurse -Force -ErrorAction SilentlyContinue
 
 if ($SkipInstaller) { Write-Host "`nApp folder ready: $(Split-Path $exe)"; return }
 

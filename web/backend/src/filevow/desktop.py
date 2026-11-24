@@ -144,6 +144,9 @@ class LocalServer:
             host=settings.api_host,
             port=settings.api_port,
             log_level="warning",
+            # Use FileVow's own logging (the log file): a windowed app has no console,
+            # so uvicorn's default console output, including startup errors, would vanish.
+            log_config=None,
         )
         self._server = uvicorn.Server(config)
         self._thread = threading.Thread(target=self._server.run, name="filevow-server", daemon=True)
@@ -193,6 +196,16 @@ def run_desktop(app_ctx: AppContext, *, background: bool = False, keep_running: 
         pass
     finally:
         server.stop()
+
+
+def show_error(message: str) -> None:
+    """Tell the user FileVow couldn't start: a windowed app has no console to print to."""
+    if sys.platform != "win32":
+        return
+    import ctypes
+
+    mb_iconerror, mb_setforeground = 0x10, 0x10000
+    ctypes.windll.user32.MessageBoxW(None, message, "FileVow", mb_iconerror | mb_setforeground)
 
 
 # --------------------------------------------------------------------------- autostart

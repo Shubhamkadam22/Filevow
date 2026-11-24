@@ -8,6 +8,7 @@ operating system's credential store (see ``filevow.secrets``).
 from __future__ import annotations
 
 import os
+import sys
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
@@ -37,8 +38,10 @@ class Settings(BaseSettings):
     baseline_key_path: Path | None = None
 
     keyring_service: str = "FileVow"
-    # "file" for development or servers without an OS keyring.
-    key_storage: Literal["keyring", "file"] = "keyring"
+    # "dpapi" (Windows default): one file encrypted for this Windows user.
+    # "keyring": the OS keyring (Linux/macOS; Windows Credential Manager can't hold large keys).
+    # "file": plain JSON for development or servers with an encrypted volume.
+    key_storage: Literal["dpapi", "keyring", "file"] = "dpapi" if sys.platform == "win32" else "keyring"
 
     allow_registration: bool = True  # anyone who can reach the dashboard may create an account
     browse_roots: list[Path] = Field(default_factory=list)  # empty: all drives and the home folder
