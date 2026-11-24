@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import { useWorkspace } from "./api/queries";
 import { useAuth } from "./auth/AuthContext";
 import { AppShell } from "./components/AppShell";
 import { AuditPage } from "./pages/AuditPage";
@@ -9,6 +10,7 @@ import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/LoginPage";
 import { ReviewPage } from "./pages/ReviewPage";
 import { RunsPage } from "./pages/RunsPage";
+import { SetPassphrasePage } from "./pages/SetPassphrasePage";
 import { SettingsPage } from "./pages/SettingsPage";
 
 export function App() {
@@ -16,6 +18,17 @@ export function App() {
 
   if (loading) return <div className="login-wrap"><span className="spinner" aria-label="Loading" /></div>;
   if (!user) return <LoginPage />;
+  return <SignedInApp />;
+}
+
+function SignedInApp() {
+  const { user } = useAuth();
+  const workspace = useWorkspace();
+  // E-mail-code accounts finish sign-up by choosing their passphrase (it creates the signing key).
+  if (user?.is_cloud) {
+    if (!workspace.data) return <div className="login-wrap"><span className="spinner" aria-label="Loading" /></div>;
+    if (!workspace.data.has_signing_key) return <SetPassphrasePage />;
+  }
 
   return (
     <AppShell>

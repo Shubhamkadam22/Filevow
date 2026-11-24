@@ -37,10 +37,10 @@ const TOPICS: Topic[] = [
     body: (
       <ol>
         <li><b>Sign in</b> with a one-time code sent to your e-mail. The first time, you also choose a username, which you can type instead of your e-mail next time. Your account gets its own private workspace.</li>
-        <li><b>Create your signing key</b> (Home → Get started). Pick a passphrase you'll remember; it's different from your account password.</li>
-        <li><b>Add a folder or file</b>: click <i>Add folder or file</i>, then <i>Browse…</i>, open the folder you want and click <i>Protect this folder</i> (or pick a single file).</li>
-        <li><b>Confirm</b> with your signing-key passphrase. FileVow fingerprints, signs and backs up every file.</li>
-        <li><b>Recommended:</b> turn on two-step verification and add a notification channel in Settings.</li>
+        <li><b>Set your passphrase</b> right after your first sign-in. It confirms important actions and locks your signing key; nobody can reset it, so pick one you'll remember.</li>
+        <li><b>Add a folder or file</b>: click <i>Add folder or file</i> on Home, then <i>Browse…</i>, open the folder you want and click <i>Protect this folder</i> (or pick a single file).</li>
+        <li><b>Confirm</b> with your passphrase. FileVow fingerprints, signs and backs up every file.</li>
+        <li><b>Recommended:</b> the <i>Finish setting up</i> list at the top of Settings suggests two-step verification and a notification channel.</li>
       </ol>
     ),
   },

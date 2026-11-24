@@ -7,6 +7,7 @@ import { useAuth } from "../auth/AuthContext";
 import { CopyButton } from "../components/CopyButton";
 import { Dialog } from "../components/Dialog";
 import { Icon } from "../components/Icon";
+import { SetupGuide } from "../components/SetupGuide";
 import { SigningKeyDialog } from "../components/SigningKeyDialog";
 import { StepUpDialog, type StepUpValues } from "../components/StepUpDialog";
 import { useToast } from "../components/Toast";
@@ -99,8 +100,9 @@ export function SettingsPage() {
   return (
     <section className="page on">
       <h1 className="ptitle">Settings</h1>
+      {owner && <SetupGuide />}
 
-      <h2 className="sec" style={{ marginTop: 0 }}>Your account</h2>
+      <h2 className="sec" id="account-settings" style={{ marginTop: 0 }}>Your account</h2>
       <div className="row">
         <Icon name="lock" />
         <div className="txt">
@@ -208,7 +210,7 @@ export function SettingsPage() {
 
       {owner && (
         <>
-          <h2 className="sec">Notifications<span className="sp" /><button className="btn" onClick={() => setDialog("channel")}><Icon name="plus" />Add channel</button></h2>
+          <h2 className="sec" id="notification-settings">Notifications<span className="sp" /><button className="btn" onClick={() => setDialog("channel")}><Icon name="plus" />Add channel</button></h2>
           <div className="table channels">
             <div className="tr th"><div>Name</div><div>Type</div><div>Sends to</div><div>Minimum</div><div>Escalation</div><div /></div>
             {(channels.data ?? []).length === 0 && <div className="empty" style={{ padding: 20 }}>No channels yet. Alerts still appear in the dashboard.</div>}

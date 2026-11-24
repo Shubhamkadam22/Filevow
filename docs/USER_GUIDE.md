@@ -27,6 +27,9 @@ FileVow has no passwords. You sign in with a one-time code sent to your e-mail.
 1. Type your e-mail address and click **Send me a code**.
 2. Type the 6-digit code from the e-mail (check Spam if it doesn't arrive within a minute).
 3. Choose a **username** and click **Create account**.
+4. **Set your passphrase** (at least 12 characters). You'll type it to confirm important
+   actions, and it locks your signing key. Nobody can reset it, so pick one you'll remember,
+   then download the backup FileVow offers.
 
 **Next time**
 1. Type your **username** (or your e-mail) and click **Send me a code**.
@@ -41,13 +44,12 @@ You stay signed in on this computer for 30 days.
 - Online, FileVow stores only your e-mail address, sign-in dates and a daily "used today"
   marker (turn it off in Settings). **Delete my account** in Settings removes all of it.
 
-## 3. The Get started checklist
+## 3. The Finish setting up checklist
 
-After signing in, the Home page shows four steps:
+The top of **Settings** shows the steps still to do, so Home stays uncluttered:
 
 | Step | What it means |
 |---|---|
-| **Create your signing key** | Your personal seal for approving files (section 4). |
 | **Protect your first folder or file** | Choose what FileVow should watch (section 5). |
 | **Turn on two-step verification** | Extra protection for your account (section 10). |
 | **Add a notification channel** | Get alerts by email, Windows notification, Slack or Teams (section 8). |

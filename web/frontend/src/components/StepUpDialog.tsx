@@ -100,7 +100,7 @@ export function StepUpDialog(props: StepUpDialogProps) {
         <p>{props.description}</p>
         {props.summary && <div className="summary">{props.summary}</div>}
         {askSecret && (cloud
-          ? field("password", "Signing-key passphrase", "Your signing-key passphrase confirms it's you.",
+          ? field("password", "Your passphrase", "The passphrase you set when you created your account.",
             <input id="su-password" type="password" autoComplete="off" value={values.password} onChange={set("password")} />)
           : field("password", "Password", "Enter your password.",
             <input id="su-password" type="password" autoComplete="current-password" value={values.password} onChange={set("password")} />))}

@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useChanges, useDashboard, useStartRun } from "../api/queries";
+import { useChanges, useDashboard, useStartRun, useWorkspace } from "../api/queries";
+import { AddFolderFlow } from "../components/AddFolderFlow";
 import { Icon, SeverityIcon } from "../components/Icon";
-import { SetupGuide } from "../components/SetupGuide";
+import { SigningKeyDialog } from "../components/SigningKeyDialog";
 import { useToast } from "../components/Toast";
 import { useNow } from "../hooks/useLiveEvents";
 import { clockTime, countdown, humanAction, severityOrder, timeAgo } from "../lib/format";
@@ -13,6 +15,9 @@ export function HomePage() {
   const navigate = useNavigate();
   const toast = useToast();
   const now = useNow();
+  const workspace = useWorkspace();
+  const [adding, setAdding] = useState(false);
+  const [keyOpen, setKeyOpen] = useState(false);
 
   if (isLoading || !data) return <div className="page-loading"><span className="spinner" /></div>;
 
@@ -25,7 +30,6 @@ export function HomePage() {
   return (
     <section className="page on">
       <h1 className="ptitle">Home</h1>
-      <SetupGuide />
       <div className={`card hero ${healthy ? "ok" : "warn"}`}>
         <div className="badge-ic"><Icon name={healthy ? "ok" : "warn"} /></div>
         <div>
@@ -49,6 +53,9 @@ export function HomePage() {
             <Icon name="verify" />Verify now
           </button>
           {!healthy && <button className="btn primary" onClick={() => navigate("/review")}>Review changes</button>}
+          {healthy && !data.protected_files && (
+            <button className="btn primary" onClick={() => setAdding(true)}><Icon name="plus" />Add folder or file</button>
+          )}
         </div>
       </div>
 
@@ -117,6 +124,9 @@ export function HomePage() {
           </div>
         </div>
       </div>
+      <AddFolderFlow open={adding} hasSigningKey={Boolean(workspace.data?.has_signing_key)}
+        onClose={() => setAdding(false)} onNeedKey={() => setKeyOpen(true)} />
+      <SigningKeyDialog open={keyOpen} onClose={() => setKeyOpen(false)} />
     </section>
   );
 }

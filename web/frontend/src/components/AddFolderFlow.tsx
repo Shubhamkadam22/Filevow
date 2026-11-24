@@ -38,11 +38,13 @@ export function AddFolderFlow({ open, hasSigningKey, onClose, onNeedKey }: Props
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     if (!path.trim()) return setError("Choose a folder or file with Browse… or type its path.");
-    if (!password) return setError("Enter your account password.");
-    if (!passphrase) return setError("Enter your signing-key passphrase.");
+    const cloud = Boolean(user?.is_cloud);
+    if (!cloud && !password) return setError("Enter your account password.");
+    if (!passphrase) return setError(cloud ? "Enter your passphrase." : "Enter your signing-key passphrase.");
     setBusy(true);
     setError(null);
-    const proof = { password, totp_code: totp || null };
+    // E-mail-code accounts have no password: their passphrase confirms it's them.
+    const proof = { password: cloud ? passphrase : password, totp_code: totp || null };
     try {
       const added = await api.post<MonitoredPath>("/paths", {
         ...proof, path: path.trim(), severity, exclude: exclude.split(",").map((p) => p.trim()).filter(Boolean),
@@ -100,12 +102,17 @@ export function AddFolderFlow({ open, hasSigningKey, onClose, onNeedKey }: Props
             </div>
           </div>
           <p style={{ margin: "4px 0 8px", fontWeight: 600 }}>Confirm it's you</p>
-          <div className="split-form">
-            <div className="field"><label htmlFor="add-pw">Account password</label>
-              <input id="add-pw" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} /></div>
-            <div className="field"><label htmlFor="add-kp">Signing-key passphrase</label>
+          {user?.is_cloud ? (
+            <div className="field"><label htmlFor="add-kp">Your passphrase</label>
               <input id="add-kp" type="password" autoComplete="off" value={passphrase} onChange={(e) => setPassphrase(e.target.value)} /></div>
-          </div>
+          ) : (
+            <div className="split-form">
+              <div className="field"><label htmlFor="add-pw">Account password</label>
+                <input id="add-pw" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} /></div>
+              <div className="field"><label htmlFor="add-kp">Signing-key passphrase</label>
+                <input id="add-kp" type="password" autoComplete="off" value={passphrase} onChange={(e) => setPassphrase(e.target.value)} /></div>
+            </div>
+          )}
           {user?.mfa_enabled && (
             <div className="field"><label htmlFor="add-totp">Authenticator code</label>
               <input id="add-totp" inputMode="numeric" value={totp} onChange={(e) => setTotp(e.target.value.replace(/\D/g, "").slice(0, 6))} /></div>
