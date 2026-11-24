@@ -10,6 +10,10 @@ export interface User {
   mfa_enabled: boolean;
   is_active: boolean;
   last_login_at: string | null;
+  email: string | null;
+  /** Signs in with Google or an e-mail code (Supabase); has no FileVow password. */
+  is_cloud: boolean;
+  usage_reporting: boolean;
 }
 
 export interface StepUp {
@@ -209,6 +213,10 @@ export interface LiveState {
 export interface AuthOptions {
   allow_registration: boolean;
   has_accounts: boolean;
+  /** Cloud sign-in is configured: offer Google / e-mail code instead of a password. */
+  cloud: boolean;
+  google: boolean;
+  email: boolean;
 }
 
 export interface Workspace {

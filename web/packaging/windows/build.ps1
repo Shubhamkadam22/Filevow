@@ -50,6 +50,18 @@ $python = Join-Path $venv "Scripts\python.exe"
 & $python -m pip install --quiet "$backend[desktop]" "pyinstaller>=6.10" "pillow>=10"
 if ($LASTEXITCODE) { throw "pip install failed" }
 
+Step "Cloud sign-in settings"
+$cloudFile = Join-Path $build "cloud.json"
+if ($env:FILEVOW_SUPABASE_URL -and $env:FILEVOW_SUPABASE_ANON_KEY) {
+  # Both values are public by design; row-level security protects the data.
+  @{ supabase_url = $env:FILEVOW_SUPABASE_URL; supabase_anon_key = $env:FILEVOW_SUPABASE_ANON_KEY } |
+    ConvertTo-Json | Set-Content -Encoding utf8 $cloudFile
+  Write-Host "Cloud sign-in on: $env:FILEVOW_SUPABASE_URL"
+} else {
+  Remove-Item $cloudFile -ErrorAction SilentlyContinue
+  Write-Warning "FILEVOW_SUPABASE_URL / FILEVOW_SUPABASE_ANON_KEY not set: this build uses local accounts."
+}
+
 Step "Drawing the app icon"
 & $python (Join-Path $here "make_icon.py") (Join-Path $build "filevow.ico")
 

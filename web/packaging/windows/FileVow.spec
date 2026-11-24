@@ -17,6 +17,7 @@ hiddenimports = [
     *collect_submodules("filevow"),
     *collect_submodules("uvicorn"),
     *collect_submodules("keyring.backends"),
+    *collect_submodules("httpx"),
     "win32timezone",
     "win32security",
     "win32crypt",
@@ -29,6 +30,9 @@ datas = [
     (str(BACKEND / "db" / "migrations"), "filevow/db/migrations"),
     *collect_data_files("alembic"),
 ]
+# Supabase URL + public anon key for cloud sign-in, written by build.ps1 when configured.
+if (HERE / "build" / "cloud.json").is_file():
+    datas.append((str(HERE / "build" / "cloud.json"), "."))
 
 a = Analysis(
     [str(HERE / "launcher.py")],

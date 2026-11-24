@@ -36,7 +36,15 @@ from filevow.services.context import AppContext
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-def _set_session_cookies(response: Response, ctx: AppContext, access: str, refresh: str) -> None:
+def start_session(
+    request: Request, response: Response, session: Session, ctx: AppContext, user: User
+) -> None:
+    """Issue access and refresh tokens for a user who just proved who they are."""
+    refresh = tokens.issue_refresh_token(session, user, client_ip(request), request.headers.get("User-Agent"))
+    _set_session_cookies(response, ctx, user, tokens.issue_access_token(user, ctx.jwt_secret()), refresh)
+
+
+def _set_session_cookies(response: Response, ctx: AppContext, user: User, access: str, refresh: str) -> None:
     secure = ctx.settings.cookie_secure
     response.set_cookie(
         ACCESS_COOKIE,
@@ -54,7 +62,7 @@ def _set_session_cookies(response: Response, ctx: AppContext, access: str, refre
         secure=secure,
         samesite="strict",
         path="/api/v1/auth",
-        max_age=int(tokens.REFRESH_TOKEN_TTL.total_seconds()),
+        max_age=int(tokens.refresh_ttl(user).total_seconds()),
     )
     # Readable by our own JavaScript so it can echo it in the X-CSRF-Token header.
     response.set_cookie(
@@ -89,17 +97,22 @@ def login(
         raise HTTPException(status.HTTP_423_LOCKED, str(exc)) from exc
     except users.AuthError as exc:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, str(exc)) from exc
-    refresh = tokens.issue_refresh_token(session, user, ip, request.headers.get("User-Agent"))
-    _set_session_cookies(response, ctx, tokens.issue_access_token(user, ctx.jwt_secret()), refresh)
+    start_session(request, response, session, ctx, user)
     return user
 
 
 @router.get("/options", response_model=AuthOptionsOut)
 def options(session: Session = Depends(get_session), ctx: AppContext = Depends(get_ctx)) -> AuthOptionsOut:
     """Public: lets the sign-in page offer "Create account" only when it is allowed."""
+    settings = ctx.settings
     has_accounts = session.scalar(select(User.id).limit(1)) is not None
+    cloud = settings.cloud_enabled
     return AuthOptionsOut(
-        allow_registration=ctx.settings.allow_registration or not has_accounts, has_accounts=has_accounts
+        allow_registration=not cloud and (settings.allow_registration or not has_accounts),
+        has_accounts=has_accounts,
+        cloud=cloud,
+        google=cloud and settings.cloud_google,
+        email=cloud and settings.cloud_email,
     )
 
 
@@ -114,6 +127,8 @@ def register(
     ctx: AppContext = Depends(get_ctx),
 ) -> User:
     """Create a personal account and sign straight in. The first account becomes the administrator."""
+    if ctx.settings.cloud_enabled:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Create your account with Google or an e-mail code")
     ip = client_ip(request)
     try:
         user = users.register(
@@ -121,8 +136,7 @@ def register(
         )
     except users.UserError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
-    refresh = tokens.issue_refresh_token(session, user, ip, request.headers.get("User-Agent"))
-    _set_session_cookies(response, ctx, tokens.issue_access_token(user, ctx.jwt_secret()), refresh)
+    start_session(request, response, session, ctx, user)
     return user
 
 
@@ -143,7 +157,7 @@ def refresh(
     except users.AuthError as exc:
         _clear_session_cookies(response)
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, str(exc)) from exc
-    _set_session_cookies(response, ctx, tokens.issue_access_token(user, ctx.jwt_secret()), new_refresh)
+    _set_session_cookies(response, ctx, user, tokens.issue_access_token(user, ctx.jwt_secret()), new_refresh)
     return user
 
 
@@ -196,6 +210,11 @@ def change_password(
     session: Session = Depends(get_session),
     ctx: AppContext = Depends(get_ctx),
 ) -> None:
+    if user.is_cloud:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            "You sign in with Google or an e-mail code, so there's no password to change",
+        )
     confirm_step_up(session, ctx, user, body)
     try:
         users.change_password(session, user, body.new_password)

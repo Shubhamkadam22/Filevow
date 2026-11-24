@@ -63,7 +63,13 @@ def set_up_workspace(client: TestClient, password: str, folder: Path) -> int:
 
 
 def test_first_account_is_admin_and_later_ones_are_users(app: TestClient) -> None:
-    assert app.get(f"{API}/auth/options").json() == {"allow_registration": True, "has_accounts": False}
+    assert app.get(f"{API}/auth/options").json() == {
+        "allow_registration": True,
+        "has_accounts": False,
+        "cloud": False,
+        "google": False,
+        "email": False,
+    }
     assert sign_up(app, *ALICE)["role"] == "admin"
     assert sign_up(new_client(app), *BOB)["role"] == "user"
 

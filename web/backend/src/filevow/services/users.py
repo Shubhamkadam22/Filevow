@@ -168,6 +168,16 @@ def verify_step_up(
         raise AuthError("Authenticator code is not correct")
 
 
+def record_failed_step_up(session: Session, user: User) -> None:
+    """Count a wrong confirmation (password, passphrase or code) like a failed sign-in."""
+    _register_failure(session, user, utcnow(), None)
+
+
+def unusable_password_hash() -> str:
+    """For accounts that sign in through the cloud: a hash no password can match."""
+    return _hasher.hash(secrets.token_urlsafe(32))
+
+
 def _register_failure(session: Session, user: User, now: datetime, ip_address: str | None) -> None:
     user.failed_attempts += 1
     audit.record_event(

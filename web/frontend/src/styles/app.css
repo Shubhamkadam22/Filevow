@@ -106,7 +106,7 @@ h2.sec a:hover { text-decoration: underline; }
 svg.sev { width: 18px; height: 18px; }
 svg.sev.crit, .row > svg.sev.crit { color: var(--fv-critical); } svg.sev.high, .row > svg.sev.high { color: var(--fv-pending); }
 svg.sev.med, .row > svg.sev.med { color: var(--fv-link); } svg.sev.ok, .row > svg.sev.ok { color: var(--fv-verified); }
-.btn { all: unset; display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 32px; padding: 0 12px; border-radius: 4px; font-size: 14px;
+.btn { all: unset; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 32px; padding: 0 12px; border-radius: 4px; font-size: 14px;
        background: var(--card); color: var(--fv-text); border: 1px solid var(--stroke); border-bottom-color: var(--stroke-strong); white-space: nowrap; }
 .btn:hover { background: color-mix(in srgb, var(--card) 93%, var(--fv-text) 7%); } .btn:active { opacity: .8; }
 .btn.primary { background: var(--fv-primary); color: var(--fv-on-primary); border-color: transparent; border-bottom-color: rgba(0,0,0,.25); }
@@ -305,6 +305,10 @@ body.compact .tr { min-height: 34px; }
 .login-card .db { padding: 28px; }
 .login-card h1 { margin: 12px 0 4px; font-size: 22px; line-height: 30px; font-weight: 600; color: var(--fv-heading); }
 .login-card p { margin: 0 0 18px; color: var(--fv-text-muted); }
+.login-card .btn.google { justify-content: center; gap: 10px; height: 40px; font-weight: 600; background: var(--card); text-decoration: none; }
+.login-card .or { display: flex; align-items: center; gap: 10px; margin: 18px 0 6px; color: var(--fv-text-subtle); font-size: 12px; }
+.login-card .or::before, .login-card .or::after { content: ""; flex: 1; border-top: 1px solid var(--stroke); }
+.form-note { background: var(--fv-info-bg); color: var(--fv-info); border-radius: 6px; padding: 8px 12px; font-size: 13px; margin-top: 8px; }
 .login-card .brand { display: flex; align-items: center; gap: 10px; }
 .login-card .brand img { width: 36px; height: 36px; }
 .form-error { color: var(--fv-critical); font-size: 13px; margin: 4px 0 10px; }

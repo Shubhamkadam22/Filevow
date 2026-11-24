@@ -43,11 +43,23 @@ class Settings(BaseSettings):
     allow_registration: bool = True  # anyone who can reach the dashboard may create an account
     browse_roots: list[Path] = Field(default_factory=list)  # empty: all drives and the home folder
 
+    # Cloud sign-in with Supabase (Google and one-time e-mail codes). Both values are public
+    # by design (the anon key only allows what row-level security permits). When unset,
+    # accounts are local username + password, as in development and server mode.
+    supabase_url: str | None = None
+    supabase_anon_key: str | None = None
+    cloud_google: bool = True
+    cloud_email: bool = True
+
     api_host: str = "127.0.0.1"
     api_port: int = 8443
     cors_origins: list[str] = Field(default_factory=list)
     cookie_secure: bool = True  # set FILEVOW_COOKIE_SECURE=false only for local http development
     frontend_dist: Path | None = None
+
+    @property
+    def cloud_enabled(self) -> bool:
+        return bool(self.supabase_url and self.supabase_anon_key)
 
     @property
     def data_dir(self) -> Path:

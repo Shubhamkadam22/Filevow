@@ -46,14 +46,33 @@ _BROWSER_CANDIDATES = (
 
 def desktop_settings(settings: Settings) -> Settings:
     """Settings for a single-computer install: loopback only, dashboard bundled."""
-    return settings.model_copy(
-        update={
-            "api_host": "127.0.0.1",
-            # The Secure flag adds nothing on loopback, and plain http keeps the window simple.
-            "cookie_secure": False,
-            "frontend_dist": settings.frontend_dist or bundled_dashboard(),
-        }
+    update: dict[str, object] = {
+        "api_host": "127.0.0.1",
+        # The Secure flag adds nothing on loopback, and plain http keeps the window simple.
+        "cookie_secure": False,
+        "frontend_dist": settings.frontend_dist or bundled_dashboard(),
+    }
+    if not settings.cloud_enabled:
+        update.update(bundled_cloud_config())
+    return settings.model_copy(update=update)
+
+
+def bundled_cloud_config() -> dict[str, str]:
+    """Supabase URL and public anon key written into the installed app by the release build."""
+    base = (
+        Path(getattr(sys, "_MEIPASS", Path(sys.executable).parent)) if getattr(sys, "frozen", False) else None
     )
+    if base is None or not (base / "cloud.json").is_file():
+        return {}
+    try:
+        data = json.loads((base / "cloud.json").read_text(encoding="utf-8-sig"))
+    except (OSError, ValueError):
+        log.warning("cloud.json in the app folder could not be read; cloud sign-in is off")
+        return {}
+    url, key = data.get("supabase_url"), data.get("supabase_anon_key")
+    if not (isinstance(url, str) and url.startswith("https://") and isinstance(key, str) and key):
+        return {}
+    return {"supabase_url": url, "supabase_anon_key": key}
 
 
 def bundled_dashboard() -> Path | None:

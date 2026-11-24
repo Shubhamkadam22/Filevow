@@ -19,6 +19,10 @@ from filevow.services.users import AuthError
 
 ACCESS_TOKEN_TTL = timedelta(minutes=15)
 REFRESH_TOKEN_TTL = timedelta(hours=8)
+# Cloud accounts stay signed in on this computer for 30 days of inactivity, so FileVow
+# opens without a new Google/e-mail sign-in (also offline). Sensitive actions still need
+# the signing-key passphrase.
+CLOUD_REFRESH_TOKEN_TTL = timedelta(days=30)
 ALGORITHM = "HS256"
 
 
@@ -56,13 +60,17 @@ def decode_access_token(token: str, secret: str) -> AccessClaims:
     return AccessClaims(int(claims["sub"]), str(claims.get("role")), int(claims["exp"]))
 
 
+def refresh_ttl(user: User) -> timedelta:
+    return CLOUD_REFRESH_TOKEN_TTL if user.is_cloud else REFRESH_TOKEN_TTL
+
+
 def issue_refresh_token(session: Session, user: User, ip: str | None, user_agent: str | None) -> str:
     raw = secrets.token_urlsafe(32)
     session.add(
         RefreshToken(
             user_id=user.id,
             token_hash=_hash(raw),
-            expires_at=utcnow() + REFRESH_TOKEN_TTL,
+            expires_at=utcnow() + refresh_ttl(user),
             ip_address=ip,
             user_agent=(user_agent or "")[:255],
         )

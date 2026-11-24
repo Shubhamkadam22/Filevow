@@ -33,6 +33,9 @@ class UserOut(ORM):
     mfa_enabled: bool
     is_active: bool
     last_login_at: datetime | None
+    email: str | None = None
+    is_cloud: bool = False
+    usage_reporting: bool = True
 
 
 class MfaSetupOut(BaseModel):
@@ -375,6 +378,22 @@ class RegisterIn(BaseModel):
 class AuthOptionsOut(BaseModel):
     allow_registration: bool
     has_accounts: bool
+    cloud: bool = False  # sign in with Supabase instead of a local password
+    google: bool = False
+    email: bool = False
+
+
+class EmailCodeStartIn(BaseModel):
+    email: str = Field(min_length=3, max_length=320)
+
+
+class EmailCodeVerifyIn(BaseModel):
+    email: str = Field(min_length=3, max_length=320)
+    code: str = Field(min_length=4, max_length=12)
+
+
+class CloudPreferencesIn(BaseModel):
+    usage_reporting: bool
 
 
 class WorkspaceOut(BaseModel):

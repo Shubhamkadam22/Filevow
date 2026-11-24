@@ -36,10 +36,10 @@ const TOPICS: Topic[] = [
     title: "Getting started",
     body: (
       <ol>
-        <li><b>Create your account</b> on the sign-in screen. Each account has its own private workspace.</li>
+        <li><b>Sign in</b> with <i>Continue with Google</i> or a one-time code sent to your e-mail. Your first sign-in creates your account, with its own private workspace.</li>
         <li><b>Create your signing key</b> (Home → Get started). Pick a passphrase you'll remember; it's different from your account password.</li>
         <li><b>Add a folder or file</b>: click <i>Add folder or file</i>, then <i>Browse…</i>, open the folder you want and click <i>Protect this folder</i> (or pick a single file).</li>
-        <li><b>Confirm</b> with your account password and your signing-key passphrase. FileVow fingerprints, signs and backs up every file.</li>
+        <li><b>Confirm</b> with your signing-key passphrase. FileVow fingerprints, signs and backs up every file.</li>
         <li><b>Recommended:</b> turn on two-step verification and add a notification channel in Settings.</li>
       </ol>
     ),
@@ -116,7 +116,7 @@ const TOPICS: Topic[] = [
         <div className="term"><b>Quarantine</b><span>For a new file nobody expected: FileVow keeps an encrypted evidence copy and removes the file.</span></div>
         <div className="term"><b>False positive</b><span>Closes the alert without changing anything. If the file is still different, it's reported again at the next check.</span></div>
         <div className="term"><b>Escalate</b><span>Marks the change for a closer look and keeps it open.</span></div>
-        <p>Accepting, restoring and quarantining always ask you to confirm it's you, and every decision is saved in your audit log with the reason you give.</p>
+        <p>Accepting, restoring and quarantining always ask for your signing-key passphrase, and every decision is saved in your audit log with the reason you give.</p>
       </>
     ),
   },
@@ -175,9 +175,10 @@ const TOPICS: Topic[] = [
     title: "Keeping your account safe",
     body: (
       <ul>
-        <li><b>Two-step verification</b> (Settings): after your password you also enter a 6-digit code from an app such as Microsoft Authenticator. Save the recovery codes you're shown.</li>
-        <li><b>Locked out?</b> After 5 wrong passwords your account is locked for 15 minutes to stop guessing.</li>
-        <li><b>Sessions</b> end automatically after 8 hours. Changing your password signs out every other session.</li>
+        <li><b>No password to steal.</b> You sign in with Google or a one-time e-mail code, and stay signed in on this PC for 30 days.</li>
+        <li><b>Your signing-key passphrase confirms important actions</b> such as accepting or restoring a file. It never leaves this PC. Five wrong tries lock the account for 15 minutes.</li>
+        <li><b>Extra protection:</b> turn on two-step verification in Settings to also require a 6-digit code from an app such as Microsoft Authenticator.</li>
+        <li><b>What's stored online:</b> only your e-mail address, sign-in dates and (unless you turn it off in Settings) a daily "used today" marker. <i>Delete my account</i> in Settings removes it all.</li>
         <li><b>Sign out</b> with the arrow icon in the top-right corner when you share the computer.</li>
       </ul>
     ),

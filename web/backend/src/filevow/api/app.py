@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 
 import filevow
 from filevow.api import events
-from filevow.api.routes import activity, admin, auth, changes, overview, setup
+from filevow.api.routes import activity, admin, auth, changes, cloud, overview, setup
 from filevow.api.security import RateLimiter, SecurityHeadersMiddleware
 from filevow.config import get_settings
 from filevow.secrets import create_secret_store
@@ -64,7 +64,15 @@ def create_app(ctx: AppContext | None = None, *, start_agent: bool = False) -> F
             allow_headers=["Content-Type", "X-CSRF-Token"],
         )
 
-    for router in (auth.router, setup.router, overview.router, changes.router, activity.router, admin.router):
+    for router in (
+        auth.router,
+        cloud.router,
+        setup.router,
+        overview.router,
+        changes.router,
+        activity.router,
+        admin.router,
+    ):
         app.include_router(router, prefix=API_PREFIX)
     app.include_router(events.router)
 

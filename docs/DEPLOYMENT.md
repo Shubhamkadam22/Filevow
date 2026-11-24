@@ -12,50 +12,11 @@ open FileVow → create an account → add the folders and files to protect.
 
 ---
 
-## Go live: first release in 6 steps
+## Go live
 
-Everything below is done once. Afterwards a new version is just step 4 again.
-
-**1. Create the GitHub repository.** On github.com: **New repository**, name `filevow`,
-public or private, and *don't* add a README or licence (the project has them). Then
-push this project:
-
-```powershell
-git remote add origin https://github.com/shubhamkadam22/filevow.git
-git push -u origin main
-```
-
-The first push opens a GitHub sign-in window (Git Credential Manager).
-
-**2. Check the website points at your repository.** `web/website/vercel.json` sends
-`/downloads/*` and `/releases` to `github.com/shubhamkadam22/filevow`; change it there if
-the repository moves. Check the contact address in `web/website/privacy.html` too.
-
-**3. Check CI is green.** The **Actions** tab runs `CI` on every push: backend lint, types
-and tests on Windows; dashboard type-check, lint, tests and build.
-
-**4. Release the installer.** Make sure the version in `web/backend/pyproject.toml`
-matches the tag, then:
-
-```powershell
-git tag v0.1.0
-git push origin v0.1.0
-```
-
-The `Release` workflow builds `FileVow.exe` and the Inno Setup installer on a GitHub
-Windows machine (about 10 minutes) and publishes a release with `FileVow-Setup.exe`,
-`FileVow-Setup-0.1.0.exe` and their `.sha256` files. The website's Download button
-always points at the newest release.
-
-**5. Deploy the website on Vercel.** On vercel.com: **Add New → Project →** import the
-`filevow` repository → **Root Directory** `web/website` → Framework Preset **Other**, no
-build command → **Deploy**. You get a `*.vercel.app` address; add your own domain under
-**Settings → Domains** if you have one.
-
-**6. Test the live site as a new user would.** Open the Vercel address, click
-**Download**, run the installer, create an account, protect a folder, change a file and
-restore it. Windows SmartScreen will warn about an unsigned installer until you sign
-it (see *Code signing*).
+The complete first-time setup (Supabase accounts, Google sign-in, e-mail codes, GitHub
+releases and Vercel) is in **[GO_LIVE.md](GO_LIVE.md)**. This document covers how each
+piece works.
 
 ---
 
@@ -130,9 +91,11 @@ Sign `FileVow.exe` before Inno Setup packs it (or configure `SignTool=` in
   redirects `/downloads/FileVow-Setup.exe` to the newest release. GitHub shows the
   download count for each file (also via the REST API), so no database is needed to
   count downloads.
-- **Accounts stay on each PC.** FileVow has no central user database: each installation
-  keeps its own accounts (Argon2id password hashes, two-step secrets, audit log) in its
-  local SQLite file. The website collects nothing.
+- **Accounts: Supabase.** When the build has `SUPABASE_URL` / `SUPABASE_ANON_KEY`
+  (repository variables), people sign in with Google or an e-mail code; Supabase stores
+  the e-mail address, sign-in dates and one activity row per day. Everything about
+  files stays in each PC's local database. Builds without those values use local
+  username + password accounts (development, server mode).
 
 Release checklist:
 

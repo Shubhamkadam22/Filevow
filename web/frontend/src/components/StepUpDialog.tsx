@@ -1,4 +1,5 @@
 import { useState, type FormEvent, type ReactNode } from "react";
+import { useWorkspace } from "../api/queries";
 import { useAuth } from "../auth/AuthContext";
 import { Dialog } from "./Dialog";
 
@@ -25,16 +26,25 @@ interface StepUpDialogProps {
 
 const EMPTY: StepUpValues = { password: "", totpCode: "", keyPassphrase: "", reason: "" };
 
-/** "Confirm it's you": fresh password, authenticator code and, when signing, the key passphrase. */
+/**
+ * "Confirm it's you": fresh password, authenticator code and, when signing, the key passphrase.
+ * Cloud accounts (Google / e-mail code) have no FileVow password: their signing-key passphrase
+ * is the proof, so they type one secret. Before they have a key, a recent sign-in counts.
+ */
 export function StepUpDialog(props: StepUpDialogProps) {
   const { user } = useAuth();
+  const workspace = useWorkspace();
   const [values, setValues] = useState<StepUpValues>(EMPTY);
   const [touched, setTouched] = useState(false);
   const needsTotp = Boolean(user?.mfa_enabled);
-  const { needsKey = false, needsReason = true } = props;
+  const cloud = Boolean(user?.is_cloud);
+  const hasKey = Boolean(workspace.data?.has_signing_key);
+  const { needsReason = true } = props;
+  const askSecret = !cloud || hasKey;
+  const needsKey = Boolean(props.needsKey) && !cloud; // cloud: the one passphrase field covers both
 
   const missing = {
-    password: !values.password,
+    password: askSecret && !values.password,
     totpCode: needsTotp && !/^\d{6}$/.test(values.totpCode),
     keyPassphrase: needsKey && !values.keyPassphrase,
     reason: needsReason && values.reason.trim().length < 3,
@@ -50,7 +60,7 @@ export function StepUpDialog(props: StepUpDialogProps) {
     event.preventDefault();
     setTouched(true);
     if (Object.values(missing).some(Boolean)) return;
-    props.onConfirm(values);
+    props.onConfirm(cloud ? { ...values, keyPassphrase: values.password } : values);
     setValues((v) => ({ ...v, password: "", totpCode: "", keyPassphrase: "" }));
   };
 
@@ -89,8 +99,11 @@ export function StepUpDialog(props: StepUpDialogProps) {
       <form id="step-up-form" onSubmit={submit} noValidate>
         <p>{props.description}</p>
         {props.summary && <div className="summary">{props.summary}</div>}
-        {field("password", "Password", "Enter your password.",
-          <input id="su-password" type="password" autoComplete="current-password" value={values.password} onChange={set("password")} />)}
+        {askSecret && (cloud
+          ? field("password", "Signing-key passphrase", "Your signing-key passphrase confirms it's you.",
+            <input id="su-password" type="password" autoComplete="off" value={values.password} onChange={set("password")} />)
+          : field("password", "Password", "Enter your password.",
+            <input id="su-password" type="password" autoComplete="current-password" value={values.password} onChange={set("password")} />))}
         {needsTotp &&
           field("totpCode", "Authenticator code", "Enter the 6-digit code from your authenticator app.",
             <input id="su-totpCode" inputMode="numeric" autoComplete="one-time-code" placeholder="6-digit code" value={values.totpCode} onChange={set("totpCode")} />)}

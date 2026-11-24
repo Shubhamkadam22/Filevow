@@ -26,7 +26,7 @@ export function SigningKeyDialog({ open, onClose }: { open: boolean; onClose: ()
     event.preventDefault();
     if (passphrase.length < 12) return setError("Use a signing-key passphrase of at least 12 characters.");
     if (passphrase !== repeat) return setError("The two passphrases don't match.");
-    if (!password) return setError("Enter your account password to confirm it's you.");
+    if (!user?.is_cloud && !password) return setError("Enter your account password to confirm it's you.");
     setBusy(true);
     setError(null);
     try {
@@ -73,9 +73,16 @@ export function SigningKeyDialog({ open, onClose }: { open: boolean; onClose: ()
             <div className="field"><label htmlFor="kp2">Repeat passphrase</label>
               <input id="kp2" type="password" autoComplete="new-password" value={repeat} onChange={(e) => setRepeat(e.target.value)} /></div>
           </div>
-          <p className="subtle" style={{ marginTop: -4 }}>Use something different from your account password, at least 12 characters.</p>
-          <div className="field"><label htmlFor="ap">Your account password (to confirm it's you)</label>
-            <input id="ap" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} /></div>
+          {user?.is_cloud ? (
+            <p className="subtle" style={{ marginTop: -4 }}>At least 12 characters. You'll also type it to confirm important
+              actions such as restoring a file, so pick one you'll remember.</p>
+          ) : (
+            <>
+              <p className="subtle" style={{ marginTop: -4 }}>Use something different from your account password, at least 12 characters.</p>
+              <div className="field"><label htmlFor="ap">Your account password (to confirm it's you)</label>
+                <input id="ap" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} /></div>
+            </>
+          )}
           {user?.mfa_enabled && (
             <div className="field"><label htmlFor="at">Authenticator code</label>
               <input id="at" inputMode="numeric" value={totp} onChange={(e) => setTotp(e.target.value.replace(/\D/g, "").slice(0, 6))} /></div>

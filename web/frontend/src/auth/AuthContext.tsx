@@ -8,6 +8,8 @@ interface AuthState {
   loading: boolean;
   login: (username: string, password: string, totpCode?: string) => Promise<void>;
   register: (username: string, password: string) => Promise<void>;
+  sendEmailCode: (email: string) => Promise<void>;
+  verifyEmailCode: (email: string, code: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   can: (minimum: Role) => boolean;
@@ -50,6 +52,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(await api.post<User>("/auth/register", { username, password }));
   }, []);
 
+  const sendEmailCode = useCallback(async (email: string) => {
+    await api.post("/auth/cloud/email/start", { email });
+  }, []);
+
+  const verifyEmailCode = useCallback(async (email: string, code: string) => {
+    setUser(await api.post<User>("/auth/cloud/email/verify", { email, code }));
+  }, []);
+
   const logout = useCallback(async () => {
     await api.post("/auth/logout").catch(() => undefined);
     queryClient.clear();
@@ -62,11 +72,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       login,
       register,
+      sendEmailCode,
+      verifyEmailCode,
       logout,
       refreshUser,
       can: (minimum) => (user ? RANK[user.role] >= RANK[minimum] : false),
     }),
-    [user, loading, login, register, logout, refreshUser],
+    [user, loading, login, register, sendEmailCode, verifyEmailCode, logout, refreshUser],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from filevow.api.security import RateLimiter
 from filevow.db.enums import Role
 from filevow.db.models import User
-from filevow.services import tokens, users
+from filevow.services import cloud, tokens, users
 from filevow.services.context import AppContext
 
 ACCESS_COOKIE = "fv_access"
@@ -26,7 +26,8 @@ ROLE_RANK = {Role.VIEWER: 0, Role.ANALYST: 1, Role.USER: 2, Role.ADMIN: 3}
 class StepUp(BaseModel):
     """Fresh proof of identity required for sensitive actions."""
 
-    password: str = Field(min_length=1, max_length=256)
+    # The account password, or for cloud accounts the signing-key passphrase.
+    password: str = Field(default="", max_length=256)
     totp_code: str | None = Field(default=None, max_length=12)
 
 
@@ -96,6 +97,11 @@ def require(minimum: Role) -> Callable[..., User]:
 
 def confirm_step_up(session: Session, ctx: AppContext, user: User, proof: StepUp) -> None:
     try:
-        users.verify_step_up(session, user, proof.password, proof.totp_code, ctx.vault_key())
+        if user.is_cloud:
+            cloud.verify_step_up(
+                session, ctx.settings, ctx.secrets, ctx.vault_key(), user, proof.password, proof.totp_code
+            )
+        else:
+            users.verify_step_up(session, user, proof.password, proof.totp_code, ctx.vault_key())
     except users.AuthError as exc:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, str(exc)) from exc

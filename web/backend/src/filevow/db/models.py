@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from enum import StrEnum
 from typing import Any
 
@@ -10,6 +10,7 @@ from sqlalchemy import (
     JSON,
     BigInteger,
     Boolean,
+    Date,
     Enum,
     ForeignKey,
     Index,
@@ -18,6 +19,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    true,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -65,6 +67,17 @@ class User(TimestampMixin, Base):
     locked_until: Mapped[datetime | None] = mapped_column(UTCDateTime())
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     last_login_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    # Cloud sign-in (Supabase): the account's ID there, its verified e-mail address and
+    # an encrypted refresh token used only for the once-a-day "in use" count.
+    cloud_id: Mapped[str | None] = mapped_column(String(64), unique=True, index=True)
+    email: Mapped[str | None] = mapped_column(String(320))
+    cloud_refresh_enc: Mapped[bytes | None] = mapped_column(LargeBinary)
+    cloud_reported_on: Mapped[date | None] = mapped_column(Date)
+    usage_reporting: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true())
+
+    @property
+    def is_cloud(self) -> bool:
+        return self.cloud_id is not None
 
 
 class RefreshToken(Base):

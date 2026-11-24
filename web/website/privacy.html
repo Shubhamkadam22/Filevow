@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Privacy policy · FileVow</title>
-  <meta name="description" content="FileVow runs on your own computer. Here is exactly what it stores, where, and what (if anything) leaves your PC.">
+  <meta name="description" content="What FileVow stores on your computer, the little it stores online for your account, and the choices you have.">
   <meta name="theme-color" content="#0F2A44">
   <meta property="og:title" content="Privacy policy · FileVow">
-  <meta property="og:description" content="FileVow runs on your own computer. Here is exactly what it stores, where, and what (if anything) leaves your PC.">
+  <meta property="og:description" content="What FileVow stores on your computer, the little it stores online for your account, and the choices you have.">
   <meta property="og:type" content="website">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/site.css">
@@ -34,54 +34,76 @@
       <span class="eyebrow">Privacy</span>
       <h1>Privacy policy</h1>
       <p class="updated">Last updated: 24 November 2026</p>
-      <p><b>The short version:</b> FileVow runs entirely on your own computer. We don't run a cloud service, we don't collect analytics, and the app doesn't send us your files, your account details or information about how you use it.</p>
+      <p><b>The short version:</b> your files, their fingerprints, their backup copies and your history stay on your own computer. To give you an account, FileVow stores your e-mail address and sign-in dates online, and, unless you turn it off, one small "used today" marker per day so we know how many people use FileVow. That's all. No file names, no file contents, no ads, no tracking.</p>
 
       <h2>1. Who this policy covers</h2>
-      <p>This policy covers the FileVow desktop app and this website. The person or organisation that installs FileVow on a computer (for example, you, or your employer on a work PC) is responsible for the data FileVow keeps on that computer.</p>
+      <p>This policy covers the FileVow desktop app, your FileVow account and this website. FileVow is published by the FileVow team ("we"), who decide how the account data described below is used.</p>
 
-      <h2>2. What the app stores on your computer</h2>
+      <h2>2. What is stored online (your account)</h2>
+      <table>
+        <thead><tr><th>Information</th><th>Why</th><th>Where</th></tr></thead>
+        <tbody>
+          <tr><td>Your e-mail address and an account ID</td><td>To create your account and sign you in</td><td>Supabase (our sign-in provider)</td></tr>
+          <tr><td>When the account was created and when you last signed in</td><td>Security, and counting how many people use FileVow</td><td>Supabase</td></tr>
+          <tr><td>One record per day you use the app: the date, the FileVow version and the Windows version</td><td>Counting active users and knowing which versions are still in use</td><td>Supabase. You can turn this off in Settings.</td></tr>
+        </tbody>
+      </table>
+      <p>If you choose <b>Continue with Google</b>, Google confirms your identity and shares your name, e-mail address and profile picture with our sign-in provider; FileVow itself only keeps the e-mail address. If you sign in with an <b>e-mail code</b>, the code is sent through our e-mail provider. We never see or store a password: there isn't one.</p>
+
+      <h2>3. What stays on your computer</h2>
       <table>
         <thead><tr><th>Information</th><th>Why</th><th>Where it's kept</th></tr></thead>
         <tbody>
-          <tr><td>Your username and a hash of your password (Argon2id)</td><td>To sign you in. Your actual password is never stored.</td><td>FileVow's database in your user folder</td></tr>
-          <tr><td>Two-step verification secret and hashed recovery codes (if you turn it on)</td><td>To check your 6-digit codes</td><td>FileVow's database, encrypted</td></tr>
           <tr><td>The paths, fingerprints, sizes, timestamps, owners and permissions of files you protect</td><td>To notice when they change</td><td>FileVow's database</td></tr>
           <tr><td>Encrypted backup copies of the files you protect</td><td>To show differences and restore files</td><td>FileVow's vault folder, encrypted with AES-256-GCM</td></tr>
           <tr><td>Your signing key, encrypted with your passphrase</td><td>To seal fingerprints and approvals</td><td>FileVow's keys folder</td></tr>
           <tr><td>Audit log: sign-ins (including the local IP address), checks and decisions with your reasons</td><td>So you can see what happened and prove nothing was tampered with</td><td>FileVow's database</td></tr>
+          <tr><td>A copy of your e-mail address and an encrypted sign-in token</td><td>To keep you signed in on this computer and send the daily marker</td><td>FileVow's database, the token encrypted</td></tr>
         </tbody>
       </table>
-      <p>By default this is the <code>%LOCALAPPDATA%\FileVow</code> folder of your Windows account. FileVow's own encryption keys are kept in the Windows Credential Manager.</p>
+      <p>By default this is the <code>%LOCALAPPDATA%\FileVow</code> folder of your Windows account. FileVow's own encryption keys are kept in the Windows Credential Manager. None of this is sent to us.</p>
 
-      <h2>3. What leaves your computer</h2>
-      <p>Nothing, unless you set it up. If you add a notification channel (email, Slack, Microsoft Teams or a webhook), FileVow sends alert messages to the service you chose. Those messages contain the alert title, severity, file path and time. They never contain file contents. The service you choose handles that information under its own privacy policy.</p>
-      <p>FileVow doesn't check for updates in the background, doesn't show ads and contains no tracking or analytics code.</p>
-
-      <h2>4. Other people on the same computer</h2>
-      <p>Each FileVow account has a private workspace. Other accounts, including the administrator account, can't see your protected files, changes, alerts or audit log in the app. The administrator can create, lock and remove accounts. Anyone with full administrator rights on Windows itself can technically access files on that computer, which is true of any desktop software.</p>
-
-      <h2>5. This website</h2>
-      <p>This website is a set of static pages. It doesn't use cookies, analytics or third-party trackers, and it doesn't ask for any personal information. Like any web server, the hosting provider may keep standard access logs (such as IP address, time and page requested) for security and reliability.</p>
-
-      <h2>6. How long information is kept</h2>
-      <p>FileVow keeps its records until you remove them. Removing a folder from monitoring stops it being watched; uninstalling FileVow and deleting its data folder removes everything it stored. Audit log entries are kept by design, because a history that can be quietly shortened can't be trusted.</p>
-
-      <h2>7. Your choices</h2>
+      <h2>4. Service providers</h2>
       <ul>
-        <li>Choose exactly which folders and files FileVow watches, and stop watching them at any time.</li>
-        <li>Turn notification channels on or off; none are on by default.</li>
-        <li>Export your audit log as CSV.</li>
-        <li>Delete everything by uninstalling FileVow and removing its data folder.</li>
+        <li><b>Supabase</b> hosts the account data above on our behalf.</li>
+        <li><b>Google</b>, only if you choose Continue with Google, under Google's own privacy policy.</li>
+        <li><b>Our e-mail provider</b> delivers sign-in codes.</li>
+        <li><b>Vercel</b> hosts this website; <b>GitHub</b> hosts the installer downloads. Both may keep standard access logs.</li>
       </ul>
+      <p>We don't sell your information or share it with anyone else, except where the law requires it.</p>
 
-      <h2>8. Children</h2>
-      <p>FileVow is a general-purpose utility and isn't directed at children. It doesn't knowingly collect information from anyone, because it doesn't collect information at all.</p>
+      <h2>5. Notifications you set up</h2>
+      <p>If you add a notification channel (e-mail, Slack, Microsoft Teams or a webhook), FileVow sends alert messages to the service you chose. They contain the alert title, severity, file path and time, never file contents, and go straight from your computer to that service, not through us.</p>
 
-      <h2>9. Changes to this policy</h2>
+      <h2>6. Other people on the same computer</h2>
+      <p>Each FileVow account has a private workspace. Other accounts, including the administrator account, can't see your protected files, changes, alerts or audit log in the app. Anyone with full administrator rights on Windows itself can technically access files on that computer, which is true of any desktop software.</p>
+
+      <h2>7. This website</h2>
+      <p>This website is a set of static pages. It doesn't use cookies, analytics or third-party trackers, and it doesn't ask for any personal information.</p>
+
+      <h2>8. How long information is kept</h2>
+      <p>Account data is kept while your account exists. When you delete your account, your e-mail address, account ID and daily records are deleted from Supabase straight away. Data on your computer stays until you delete it: uninstalling FileVow and removing its data folder deletes everything it stored there.</p>
+
+      <h2>9. Your choices and rights</h2>
+      <ul>
+        <li><b>Turn off the daily marker:</b> Settings → <i>Count me as an active user</i>.</li>
+        <li><b>Delete your account:</b> Settings → <i>Delete my account</i>. This deletes your online data immediately.</li>
+        <li><b>See or correct your data:</b> your e-mail address is shown in Settings; contact us for a copy of everything we hold about you.</li>
+        <li>Choose exactly which folders and files FileVow watches, and stop at any time.</li>
+      </ul>
+      <p>Depending on where you live, data-protection laws (such as India's Digital Personal Data Protection Act, 2023, or the EU GDPR) give you further rights, including to withdraw consent and to complain to a regulator. We'll respond to requests within 30 days.</p>
+
+      <h2>10. Security</h2>
+      <p>Account data is protected by row-level security, so each signed-in account can only write its own records and can't read anyone else's. Connections use HTTPS. Sensitive actions in the app need your signing-key passphrase, which never leaves your computer.</p>
+
+      <h2>11. Children</h2>
+      <p>FileVow isn't directed at children under 18, and we don't knowingly create accounts for them.</p>
+
+      <h2>12. Changes to this policy</h2>
       <p>If this policy changes, we'll update the date at the top of this page and describe significant changes in the release notes of the next version.</p>
 
-      <h2>10. Contact</h2>
-      <p>Questions about privacy? Contact the FileVow team at <a href="mailto:privacy@filevow.app">privacy@filevow.app</a>.</p>
+      <h2>13. Contact</h2>
+      <p>Questions or requests about privacy? Contact the FileVow team at <a href="mailto:privacy@filevow.app">privacy@filevow.app</a>.</p>
     </div>
   </main>
 

@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { ApiError, api } from "../api/client";
 import type { AuthOptions } from "../api/types";
 import { useAuth } from "../auth/AuthContext";
+import { CloudSignIn } from "./CloudSignIn";
 
 type Mode = "signin" | "signup";
 
@@ -54,6 +55,9 @@ export function LoginPage() {
 
   const signup = mode === "signup";
   const firstAccount = options !== null && !options.has_accounts;
+
+  if (options === null) return <div className="login-wrap"><span className="spinner" aria-label="Loading" /></div>;
+  if (options.cloud) return <CloudSignIn options={options} />;
 
   return (
     <div className="login-wrap">

@@ -17,10 +17,11 @@ type Pending =
   | { kind: "password"; newPassword: string }
   | { kind: "user"; username: string; newPassword: string; role: Role }
   | { kind: "user-update"; id: number; changes: { role?: Role; is_active?: boolean } }
-  | { kind: "channel"; body: Record<string, unknown> };
+  | { kind: "channel"; body: Record<string, unknown> }
+  | { kind: "delete-account" };
 
 export function SettingsPage() {
-  const { user, can, refreshUser } = useAuth();
+  const { user, can, refreshUser, logout } = useAuth();
   const prefs = usePreferences();
   const keys = useKeys();
   const system = useSystem();
@@ -53,6 +54,11 @@ export function SettingsPage() {
       } else if (pending.kind === "user-update") {
         await api.patch(`/users/${pending.id}`, { ...proof, ...pending.changes });
         toast("Account updated");
+      } else if (pending.kind === "delete-account") {
+        await api.post("/auth/cloud/delete-account", proof);
+        setPending(null);
+        await logout();
+        return;
       } else {
         await api.post("/channels", { ...proof, ...pending.body });
         toast("Notification channel added");
@@ -75,6 +81,15 @@ export function SettingsPage() {
     }
   };
 
+  const setUsageReporting = async (on: boolean) => {
+    try {
+      await api.post("/auth/cloud/preferences", { usage_reporting: on });
+      await refreshUser();
+    } catch (err) {
+      toast("Could not save", err instanceof Error ? err.message : undefined);
+    }
+  };
+
   const disableChannel = async (id: number) => {
     await api.delete(`/channels/${id}`);
     await queryClient.invalidateQueries();
@@ -94,11 +109,42 @@ export function SettingsPage() {
         </div>
         {user?.mfa_enabled ? <span className="pill ok"><Icon name="check" />On</span> : <button className="btn primary" onClick={() => setMfaOpen(true)}>Turn on</button>}
       </div>
-      <div className="row">
-        <Icon name="key" />
-        <div className="txt"><b>Password</b><span>Signed in as {user?.username} ({user?.role}) · last sign-in {timeAgo(user?.last_login_at)}</span></div>
-        <button className="btn" onClick={() => setDialog("password")}>Change</button>
-      </div>
+      {user?.is_cloud ? (
+        <>
+          <div className="row">
+            <Icon name="user" />
+            <div className="txt">
+              <b>{user.email}</b>
+              <span>Signs in with Google or an e-mail code · {user.username} ({user.role}) · last sign-in {timeAgo(user.last_login_at)}</span>
+            </div>
+          </div>
+          <div className="row">
+            <Icon name="verify" />
+            <div className="txt">
+              <b>Count me as an active user</b>
+              <span>Once a day FileVow tells its publisher this account used the app, with the app and Windows version. Never file names or contents.</span>
+            </div>
+            <label className="toggle" title={user.usage_reporting ? "On" : "Off"}>
+              <input type="checkbox" checked={user.usage_reporting} aria-label="Daily active-use count"
+                onChange={(e) => void setUsageReporting(e.target.checked)} />
+            </label>
+          </div>
+          <div className="row">
+            <Icon name="warn" />
+            <div className="txt">
+              <b>Delete my account</b>
+              <span>Removes your online account and usage data and signs you out. Protected files and their backups on this PC stay.</span>
+            </div>
+            <button className="btn danger" onClick={() => setPending({ kind: "delete-account" })}>Delete</button>
+          </div>
+        </>
+      ) : (
+        <div className="row">
+          <Icon name="key" />
+          <div className="txt"><b>Password</b><span>Signed in as {user?.username} ({user?.role}) · last sign-in {timeAgo(user?.last_login_at)}</span></div>
+          <button className="btn" onClick={() => setDialog("password")}>Change</button>
+        </div>
+      )}
 
       <h2 className="sec">Signing keys</h2>
       <div className="row">
@@ -132,7 +178,7 @@ export function SettingsPage() {
 
       {admin && (
         <>
-          <h2 className="sec">Accounts on this computer<span className="sp" /><button className="btn" onClick={() => setDialog("user")}><Icon name="plus" />Add user</button></h2>
+          <h2 className="sec">Accounts on this computer<span className="sp" />{!user?.is_cloud && <button className="btn" onClick={() => setDialog("user")}><Icon name="plus" />Add user</button>}</h2>
           <div className="table users">
             <div className="tr th"><div>User</div><div>Role</div><div>Two-step</div><div>Last sign-in</div><div /></div>
             {(users.data ?? []).map((account) => (
@@ -219,8 +265,12 @@ export function SettingsPage() {
         onSubmit={(username, newPassword, role) => { setDialog(null); setPending({ kind: "user", username, newPassword, role }); }} />
       <ChannelDialog open={dialog === "channel"} onClose={() => setDialog(null)}
         onSubmit={(body) => { setDialog(null); setPending({ kind: "channel", body }); }} />
-      <StepUpDialog open={pending !== null} description="This change needs a fresh confirmation of your identity."
-        confirmLabel="Confirm" needsReason={false} busy={busy} error={error}
+      <StepUpDialog open={pending !== null}
+        title={pending?.kind === "delete-account" ? "Delete your account?" : undefined}
+        description={pending?.kind === "delete-account"
+          ? "Your online FileVow account and its usage data are deleted for good, and you're signed out. Files and backups on this PC are not touched."
+          : "This change needs a fresh confirmation of your identity."}
+        confirmLabel={pending?.kind === "delete-account" ? "Delete my account" : "Confirm"} needsReason={false} busy={busy} error={error}
         onCancel={() => { setPending(null); setError(null); }} onConfirm={confirm} />
     </section>
   );

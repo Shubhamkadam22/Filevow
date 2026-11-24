@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import threading
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from sqlalchemy import select
@@ -12,6 +12,7 @@ from sqlalchemy import select
 from filevow.agent.watcher import FileWatcher
 from filevow.db.enums import RunType
 from filevow.db.models import MonitoredPath
+from filevow.services import cloud
 from filevow.services.context import AppContext
 from filevow.services.monitor import MonitoringService
 
@@ -57,6 +58,16 @@ class AgentRuntime:
         self._scheduler.add_job(
             self._monitor.retry_notifications, "interval", seconds=60, id="retry", max_instances=1
         )
+        if self._ctx.settings.cloud_enabled:
+            # Once-a-day "in use" count for cloud accounts (see services/cloud.py).
+            self._scheduler.add_job(
+                self.report_activity,
+                "interval",
+                hours=1,
+                id="usage",
+                max_instances=1,
+                next_run_time=datetime.now(UTC) + timedelta(minutes=2),
+            )
         self._scheduler.start()
 
         if self._realtime:
@@ -81,6 +92,15 @@ class AgentRuntime:
             result = self._monitor.verify(RunType.REALTIME, only_paths=paths)
         if result.summary.issues:
             log.info("real-time check found %d issue(s)", result.summary.issue_count)
+
+    def report_activity(self) -> None:
+        client = self._ctx.cloud()
+        if client is None:
+            return
+        with self._ctx.session() as session:
+            reported = cloud.report_daily_activity(session, client, self._ctx.vault_key())
+        if reported:
+            log.info("reported today's use for %d account(s)", reported)
 
     def _protected_roots(self) -> list[str]:
         with self._ctx.session() as session:

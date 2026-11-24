@@ -19,16 +19,21 @@ the app.
 Closing the window doesn't stop monitoring when background monitoring is on. Opening
 FileVow again just shows the window.
 
-## 2. Create your account
+## 2. Sign in
 
-The first screen lets you **sign in** or **create an account**.
+The first screen offers two ways in. Your first sign-in creates your account.
+
+- **Continue with Google**: pick your Google account in the window that opens.
+- **Send me a code**: type your e-mail address, then the 6-digit code FileVow e-mails you.
+
+There's no password to remember. You stay signed in on this computer for 30 days.
 
 - Each account has its own **private workspace**: its own folders, signing key, changes,
   alerts, history and audit log. Other accounts on the same computer can't see any of it.
-- The **first account** created on a computer becomes its **administrator**. The
-  administrator can add, lock and remove accounts, but still can't see other people's
-  workspaces.
-- Passwords need at least 12 characters. A short sentence is easy to remember and strong.
+- The **first account** on a computer becomes its **administrator**, who can lock and
+  remove accounts but still can't see other people's workspaces.
+- Online, FileVow stores only your e-mail address, sign-in dates and a daily "used today"
+  marker (turn it off in Settings). **Delete my account** in Settings removes all of it.
 
 ## 3. The Get started checklist
 
@@ -49,7 +54,8 @@ quietly "approve" a change.
 
 - The key is created on your computer and stored **encrypted with your signing-key
   passphrase**. Choose one you'll remember; it is separate from your account password.
-- You need the passphrase when you **protect** files and when you **accept** a change.
+- You need the passphrase when you **protect** files, **accept** a change, and to confirm
+  other important actions such as restoring or removing a file.
 - **Download a backup** (Settings → Signing keys → Download backup) and keep it on a USB
   drive. The backup is still encrypted with your passphrase.
 - If you forget the passphrase, nobody can recover it. Your files stay monitored and can
@@ -67,7 +73,7 @@ Go to **Monitored folders → Add folder or file**.
    to protect just that file.
 4. Choose **How serious is a change** (critical, high, medium, low) and, optionally,
    **Skip files matching** patterns such as `*.log`, `*.tmp` or `~$*` (Office lock files).
-5. Confirm with your **account password** and your **signing-key passphrase**.
+5. Confirm with your **signing-key passphrase**.
 
 FileVow now calculates a fingerprint of every file, signs it with your key and stores an
 encrypted backup copy. Large folders can take a moment.
@@ -119,7 +125,7 @@ Then choose what to do:
 | **Escalate** | You want to look into it more closely. | Stays open and is marked for attention. |
 
 Every decision asks for a **reason** and is saved in your audit log. Accept, restore and
-quarantine also ask you to confirm with your password (and two-step code, if on).
+quarantine also ask for your signing-key passphrase (and two-step code, if on).
 
 FileVow **never accepts a change on its own**.
 
@@ -144,11 +150,11 @@ FileVow **never accepts a change on its own**.
 
 ## 10. Keeping your account safe
 
-- **Two-step verification** (Settings): scan the QR code with an authenticator app such
-  as Microsoft Authenticator, then enter the 6-digit code it shows. Save the recovery
-  codes somewhere safe; each works once if you lose your phone.
-- After **5 wrong passwords** the account is locked for 15 minutes.
-- Sessions end automatically; changing your password signs out every other session.
+- **No password to steal:** you sign in with Google or a one-time e-mail code.
+- **Your signing-key passphrase** confirms important actions and never leaves your PC.
+  Five wrong tries lock the account for 15 minutes.
+- **Two-step verification** (Settings, optional): also require a 6-digit code from an
+  authenticator app such as Microsoft Authenticator. Save the recovery codes.
 - Use the **sign-out** arrow (top right) when you share the computer.
 
 ## 11. Keyboard shortcuts

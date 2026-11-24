@@ -5,6 +5,7 @@ from __future__ import annotations
 import secrets as token_source
 from contextlib import AbstractContextManager
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import Engine, select
 from sqlalchemy.orm import Session, sessionmaker
@@ -18,6 +19,9 @@ from filevow.db.models import SigningKey
 from filevow.secrets import AGENT_PRIVATE_KEY, JWT_SECRET, VAULT_KEY, SecretStore
 from filevow.vault import MirrorVault
 
+if TYPE_CHECKING:
+    from filevow.services.cloud import SupabaseAuth
+
 
 @dataclass
 class AppContext:
@@ -25,6 +29,7 @@ class AppContext:
     secrets: SecretStore
     engine: Engine = field(init=False)
     session_factory: sessionmaker[Session] = field(init=False)
+    cloud_transport: Any = field(default=None, repr=False)  # tests inject an httpx.MockTransport
 
     def __post_init__(self) -> None:
         self.engine = build_engine(self.settings.resolved_database_url)
@@ -38,6 +43,15 @@ class AppContext:
 
     def vault_key(self) -> bytes:
         return bytes.fromhex(self.secrets.get(VAULT_KEY))
+
+    def cloud(self) -> SupabaseAuth | None:
+        """The Supabase client when cloud sign-in is configured, else ``None``."""
+        settings = self.settings
+        if not (settings.supabase_url and settings.supabase_anon_key):
+            return None
+        from filevow.services.cloud import SupabaseAuth
+
+        return SupabaseAuth(settings.supabase_url, settings.supabase_anon_key, transport=self.cloud_transport)
 
     def jwt_secret(self) -> str:
         return self.secrets.get(JWT_SECRET)

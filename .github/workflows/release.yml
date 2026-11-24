@@ -47,6 +47,11 @@ jobs:
 
       - name: Build app and installer
         shell: pwsh
+        env:
+          # Repository variables (Settings -> Secrets and variables -> Actions -> Variables).
+          # Public values: the anon key only allows what row-level security permits.
+          FILEVOW_SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          FILEVOW_SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
         run: ./web/packaging/windows/build.ps1
 
       - name: Check the installer was built
