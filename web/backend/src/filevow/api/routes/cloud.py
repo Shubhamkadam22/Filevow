@@ -1,4 +1,4 @@
-"""Cloud sign-in routes: Google (OAuth + PKCE) and one-time e-mail codes via Supabase."""
+"""Cloud sign-in routes: one-time e-mail codes (by e-mail or username) and, optionally, Google."""
 
 from __future__ import annotations
 
@@ -18,7 +18,13 @@ from filevow.api.deps import (
     rate_limit,
 )
 from filevow.api.routes.auth import _clear_session_cookies, start_session
-from filevow.api.schemas import CloudPreferencesIn, EmailCodeStartIn, EmailCodeVerifyIn, UserOut
+from filevow.api.schemas import (
+    CloudPreferencesIn,
+    EmailCodeStartIn,
+    EmailCodeStartOut,
+    EmailCodeVerifyIn,
+    UserOut,
+)
 from filevow.db.models import User
 from filevow.services import cloud, tokens, users
 from filevow.services.context import AppContext
@@ -55,8 +61,11 @@ def _after_sign_in(
     ctx: AppContext,
     client: cloud.SupabaseAuth,
     signed_in: cloud.CloudSession,
+    username: str | None = None,
 ) -> User:
-    user = cloud.link_account(session, signed_in, ctx.vault_key(), ip_address=client_ip(request))
+    user = cloud.link_account(
+        session, signed_in, ctx.vault_key(), ip_address=client_ip(request), username=username
+    )
     if user.usage_reporting:
         try:  # signing in counts as using the app today; never block sign-in on it
             cloud.record_activity(client, signed_in.access_token)
@@ -67,7 +76,12 @@ def _after_sign_in(
     return user
 
 
-@router.get("/google", dependencies=[Depends(rate_limit("cloud-google", 10))])
+def _google_enabled(ctx: AppContext = Depends(get_ctx)) -> None:
+    if not ctx.settings.cloud_google:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Google sign-in is turned off")
+
+
+@router.get("/google", dependencies=[Depends(_google_enabled), Depends(rate_limit("cloud-google", 10))])
 def google_start(request: Request, client: cloud.SupabaseAuth = Depends(_cloud)) -> RedirectResponse:
     """Send the window to Google (via Supabase); the verifier stays in an HttpOnly cookie."""
     pkce = cloud.new_pkce_pair()
@@ -86,7 +100,7 @@ def google_start(request: Request, client: cloud.SupabaseAuth = Depends(_cloud))
     return response
 
 
-@router.get("/callback")
+@router.get("/callback", dependencies=[Depends(_google_enabled)])
 def google_callback(
     request: Request,
     code: str | None = None,
@@ -112,15 +126,25 @@ def google_callback(
 
 
 @router.post(
-    "/email/start",
-    status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[Depends(rate_limit("cloud-email", 5))],
+    "/email/start", response_model=EmailCodeStartOut, dependencies=[Depends(rate_limit("cloud-email", 5))]
 )
-def email_start(body: EmailCodeStartIn, client: cloud.SupabaseAuth = Depends(_cloud)) -> None:
+def email_start(
+    body: EmailCodeStartIn,
+    session: Session = Depends(get_session),
+    client: cloud.SupabaseAuth = Depends(_cloud),
+) -> EmailCodeStartOut:
+    """E-mail a sign-in code. ``login`` is an e-mail address or a username on this computer."""
     try:
-        client.send_email_code(cloud.normalize_email(body.email))
+        target = cloud.resolve_login(session, body.login)
+        client.send_email_code(target.email)
     except cloud.CloudError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
+    new_account = target.account is None
+    return EmailCodeStartOut(
+        email_hint=cloud.mask_email(target.email),
+        new_account=new_account,
+        suggested_username=cloud.suggest_username(session, target.email) if new_account else None,
+    )
 
 
 @router.post("/email/verify", response_model=UserOut, dependencies=[Depends(rate_limit("cloud-verify", 10))])
@@ -133,8 +157,15 @@ def email_verify(
     client: cloud.SupabaseAuth = Depends(_cloud),
 ) -> User:
     try:
-        signed_in = client.verify_email_code(cloud.normalize_email(body.email), body.code)
-        return _after_sign_in(request, response, session, ctx, client, signed_in)
+        target = cloud.resolve_login(session, body.login)
+        # Check a new username first, so a taken name doesn't use up the code.
+        username = (
+            cloud.check_new_username(session, body.username)
+            if target.account is None and body.username
+            else None
+        )
+        signed_in = client.verify_email_code(target.email, body.code)
+        return _after_sign_in(request, response, session, ctx, client, signed_in, username)
     except cloud.CloudError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
     except users.AuthError as exc:

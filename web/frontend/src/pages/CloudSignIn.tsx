@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import type { AuthOptions } from "../api/types";
+import type { AuthOptions, EmailCodeStart } from "../api/types";
 import { useAuth } from "../auth/AuthContext";
 
 /** Google's "G" mark, as Google's sign-in branding guidelines ask for on the button. */
@@ -14,17 +14,21 @@ function GoogleMark() {
   );
 }
 
-/** Sign-in with Google or a one-time e-mail code (Supabase). First sign-in creates the account. */
+/**
+ * Passwordless sign-in: the user types their e-mail address (or, on a PC they've used before,
+ * their username) and gets a one-time code by e-mail. The first sign-in on a PC also asks for a
+ * username, which they can use next time instead of the e-mail address.
+ */
 export function CloudSignIn({ options }: { options: AuthOptions }) {
   const { sendEmailCode, verifyEmailCode } = useAuth();
-  const [email, setEmail] = useState("");
+  const [login, setLogin] = useState("");
   const [code, setCode] = useState("");
-  const [codeSent, setCodeSent] = useState(false);
+  const [username, setUsername] = useState("");
+  const [sent, setSent] = useState<EmailCodeStart | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  // Errors from the Google round trip come back as ?signin_error=...
+  // Errors from an optional Google round trip come back as ?signin_error=...
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const message = params.get("signin_error");
@@ -39,14 +43,13 @@ export function CloudSignIn({ options }: { options: AuthOptions }) {
   const send = async (event?: FormEvent) => {
     event?.preventDefault();
     setError(null);
-    setNotice(null);
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())) return setError("Enter your e-mail address.");
+    if (login.trim().length < 3) return setError("Enter your e-mail address or username.");
     setBusy(true);
     try {
-      await sendEmailCode(email.trim());
-      setCodeSent(true);
+      const result = await sendEmailCode(login.trim());
+      setSent(result);
       setCode("");
-      setNotice(`We sent a 6-digit code to ${email.trim()}. It's valid for a few minutes.`);
+      if (result.new_account) setUsername((current) => current || result.suggested_username || "");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not send the code");
     } finally {
@@ -58,77 +61,91 @@ export function CloudSignIn({ options }: { options: AuthOptions }) {
     event.preventDefault();
     setError(null);
     if (!/^\d{6,10}$/.test(code)) return setError("Enter the code from the e-mail.");
+    if (sent?.new_account && !/^[a-zA-Z0-9._-]{3,64}$/.test(username.trim())) {
+      return setError("Choose a username of 3-64 letters, numbers, dots, dashes or underscores.");
+    }
     setBusy(true);
     try {
-      await verifyEmailCode(email.trim(), code);
+      await verifyEmailCode(login.trim(), code, sent?.new_account ? username.trim() : undefined);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not sign in");
       setBusy(false);
     }
   };
 
+  const startOver = () => {
+    setSent(null);
+    setCode("");
+    setError(null);
+  };
+
   return (
     <div className="login-wrap">
-      <form className="login-card" onSubmit={codeSent ? verify : send} noValidate>
+      <form className="login-card" onSubmit={sent ? verify : send} noValidate>
         <div className="db">
           <div className="brand">
             <img src="/logo-mark.svg" alt="" className="themed-logo" />
             <b>FileVow</b>
           </div>
-          <h1>{firstAccount ? "Welcome to FileVow" : "Sign in"}</h1>
+          <h1>{firstAccount ? "Welcome to FileVow" : sent?.new_account ? "Create your account" : "Sign in"}</h1>
           <p>
-            {firstAccount
-              ? "Sign in to create your account. It gets its own private workspace on this computer."
-              : "Sign in to your private workspace. New here? Signing in creates your account."}
+            {sent
+              ? `We sent a 6-digit code to ${sent.email_hint}. It's valid for 10 minutes.`
+              : firstAccount
+                ? "Enter your e-mail address. We'll send you a code to create your account, no password needed."
+                : "Enter your username or e-mail address and we'll e-mail you a sign-in code. New here? Use your e-mail address."}
           </p>
 
-          {options.google && !codeSent && (
+          {options.google && !sent && (
             <>
               <a className="btn full google" href="/api/v1/auth/cloud/google">
                 <GoogleMark />Continue with Google
               </a>
-              {options.email && <div className="or"><span>or use your e-mail</span></div>}
+              <div className="or"><span>or use your e-mail</span></div>
             </>
           )}
 
-          {options.email && (
-            <>
-              <div className="field">
-                <label htmlFor="email">E-mail address</label>
-                <input id="email" type="email" autoComplete="email" value={email} disabled={codeSent}
-                  onChange={(e) => setEmail(e.target.value)} placeholder="you@gmail.com" />
-              </div>
-              {codeSent && (
-                <div className="field">
-                  <label htmlFor="code">Code from the e-mail</label>
-                  <input id="code" inputMode="numeric" autoComplete="one-time-code" placeholder="6-digit code" autoFocus
-                    value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 10))} />
-                </div>
-              )}
-            </>
+          <div className="field">
+            <label htmlFor="login">{firstAccount ? "E-mail address" : "Username or e-mail"}</label>
+            <input id="login" autoComplete="username" value={login} disabled={Boolean(sent)} autoFocus
+              onChange={(e) => setLogin(e.target.value)} placeholder={firstAccount ? "you@gmail.com" : "yourname or you@gmail.com"} />
+          </div>
+
+          {sent && (
+            <div className="field">
+              <label htmlFor="code">Code from the e-mail</label>
+              <input id="code" inputMode="numeric" autoComplete="one-time-code" placeholder="6-digit code" autoFocus
+                value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 10))} />
+            </div>
           )}
-          {notice && !error && <div className="form-note" role="status">{notice}</div>}
+
+          {sent?.new_account && (
+            <div className="field">
+              <label htmlFor="username">Choose a username</label>
+              <input id="username" autoComplete="off" value={username} onChange={(e) => setUsername(e.target.value)} />
+              <div className="msg" style={{ display: "block", color: "var(--fv-text-subtle)" }}>
+                Next time you can sign in with this instead of your e-mail.
+              </div>
+            </div>
+          )}
+
           {error && <div className="form-error" role="alert">{error}</div>}
         </div>
-        {options.email && (
-          <div className="df" style={{ gridTemplateColumns: "1fr", gap: 10 }}>
-            <button className="btn primary full" type="submit" disabled={busy}>
-              {busy ? <span className="spinner" /> : codeSent ? "Sign in" : "Send me a code"}
-            </button>
-            {codeSent && (
-              <p className="subtle" style={{ textAlign: "center", margin: 0 }}>
-                <button type="button" className="link" onClick={() => void send()} disabled={busy}>Send a new code</button>
-                {" · "}
-                <button type="button" className="link" onClick={() => { setCodeSent(false); setNotice(null); setError(null); }}>
-                  Use a different e-mail
-                </button>
-              </p>
-            )}
-            <p className="subtle" style={{ textAlign: "center", margin: 0, fontSize: 12 }}>
-              Only your e-mail address and sign-in dates are stored online. Your files never leave this PC.
+        <div className="df" style={{ gridTemplateColumns: "1fr", gap: 10 }}>
+          <button className="btn primary full" type="submit" disabled={busy}>
+            {busy ? <span className="spinner" /> : sent ? (sent.new_account ? "Create account" : "Sign in") : "Send me a code"}
+          </button>
+          {sent && (
+            <p className="subtle" style={{ textAlign: "center", margin: 0 }}>
+              <button type="button" className="link" onClick={() => void send()} disabled={busy}>Send a new code</button>
+              {" · "}
+              <button type="button" className="link" onClick={startOver}>Use a different e-mail</button>
             </p>
-          </div>
-        )}
+          )}
+          <p className="subtle" style={{ textAlign: "center", margin: 0, fontSize: 12 }}>
+            Only your e-mail address and sign-in dates are stored online. Your files never leave this PC.
+          </p>
+        </div>
       </form>
     </div>
   );

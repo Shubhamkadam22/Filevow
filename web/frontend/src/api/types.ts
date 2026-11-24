@@ -219,6 +219,14 @@ export interface AuthOptions {
   email: boolean;
 }
 
+export interface EmailCodeStart {
+  /** Masked address the code went to, e.g. p•••@gmail.com */
+  email_hint: string;
+  /** First sign-in on this PC: ask for a username. */
+  new_account: boolean;
+  suggested_username: string | null;
+}
+
 export interface Workspace {
   has_signing_key: boolean;
   key_id: string | null;

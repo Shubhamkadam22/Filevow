@@ -111,8 +111,8 @@ def app(ctx: AppContext, fake: FakeSupabase) -> Iterator[TestClient]:
 
 
 def email_sign_in(client: TestClient, email: str) -> dict[str, object]:
-    assert client.post(f"{API}/auth/cloud/email/start", json={"email": email}).status_code == 204
-    response = client.post(f"{API}/auth/cloud/email/verify", json={"email": email, "code": GOOD_CODE})
+    assert client.post(f"{API}/auth/cloud/email/start", json={"login": email}).status_code == 200
+    response = client.post(f"{API}/auth/cloud/email/verify", json={"login": email, "code": GOOD_CODE})
     assert response.status_code == 200, response.text
     client.headers["X-CSRF-Token"] = client.cookies.get("fv_csrf", "")
     return response.json()  # type: ignore[no-any-return]
@@ -124,7 +124,7 @@ def test_options_offer_cloud_sign_in_and_block_password_sign_up(app: TestClient)
         "allow_registration": False,
         "has_accounts": False,
         "cloud": True,
-        "google": True,
+        "google": False,  # off unless FILEVOW_CLOUD_GOOGLE=true
         "email": True,
     }
 
@@ -157,19 +157,20 @@ def test_second_person_gets_their_own_regular_account(app: TestClient) -> None:
 
 
 def test_wrong_code_is_refused_with_a_clear_message(app: TestClient) -> None:
-    app.post(f"{API}/auth/cloud/email/start", json={"email": "a@example.com"})
-    response = app.post(f"{API}/auth/cloud/email/verify", json={"email": "a@example.com", "code": "000000"})
+    app.post(f"{API}/auth/cloud/email/start", json={"login": "a@example.com"})
+    response = app.post(f"{API}/auth/cloud/email/verify", json={"login": "a@example.com", "code": "000000"})
     assert response.status_code == 400
     assert "wrong or has expired" in response.json()["detail"]
 
 
 def test_invalid_email_is_refused_before_calling_supabase(app: TestClient, fake: FakeSupabase) -> None:
-    response = app.post(f"{API}/auth/cloud/email/start", json={"email": "not-an-email"})
+    response = app.post(f"{API}/auth/cloud/email/start", json={"login": "not-an-email"})
     assert response.status_code == 400
     assert fake.codes_sent == []
 
 
 def test_google_sign_in_with_pkce(app: TestClient, fake: FakeSupabase) -> None:
+    app.app.state.ctx.settings.cloud_google = True
     start = app.get(f"{API}/auth/cloud/google", follow_redirects=False)
     assert start.status_code == 303
     target = urlparse(start.headers["location"])
@@ -189,12 +190,14 @@ def test_google_sign_in_with_pkce(app: TestClient, fake: FakeSupabase) -> None:
 
 
 def test_google_callback_without_the_pkce_cookie_is_refused(app: TestClient, fake: FakeSupabase) -> None:
+    app.app.state.ctx.settings.cloud_google = True
     response = TestClient(app.app).get(f"{API}/auth/cloud/callback?code=google-code", follow_redirects=False)
     assert response.status_code == 303
     assert response.headers["location"].startswith("/?signin_error=")
 
 
 def test_cancelled_google_sign_in_returns_to_the_sign_in_page(app: TestClient) -> None:
+    app.app.state.ctx.settings.cloud_google = True
     response = app.get(
         f"{API}/auth/cloud/callback?error=access_denied&error_description=Cancelled", follow_redirects=False
     )
@@ -202,9 +205,9 @@ def test_cancelled_google_sign_in_returns_to_the_sign_in_page(app: TestClient) -
 
 
 def test_cloud_sessions_last_thirty_days(app: TestClient) -> None:
-    app.post(f"{API}/auth/cloud/email/start", json={"email": "keep@example.com"})
+    app.post(f"{API}/auth/cloud/email/start", json={"login": "keep@example.com"})
     response = app.post(
-        f"{API}/auth/cloud/email/verify", json={"email": "keep@example.com", "code": GOOD_CODE}
+        f"{API}/auth/cloud/email/verify", json={"login": "keep@example.com", "code": GOOD_CODE}
     )
     refresh_cookie = next(h for h in response.headers.get_list("set-cookie") if h.startswith("fv_refresh="))
     assert f"Max-Age={30 * 24 * 3600}" in refresh_cookie
@@ -310,5 +313,67 @@ def test_without_supabase_settings_cloud_routes_are_off(ctx: AppContext) -> None
     with TestClient(create_app(ctx)) as client:
         assert client.get(f"{API}/auth/options").json()["cloud"] is False
         assert (
-            client.post(f"{API}/auth/cloud/email/start", json={"email": "a@example.com"}).status_code == 404
+            client.post(f"{API}/auth/cloud/email/start", json={"login": "a@example.com"}).status_code == 404
         )
+
+
+def test_google_is_off_by_default(app: TestClient) -> None:
+    assert app.get(f"{API}/auth/cloud/google", follow_redirects=False).status_code == 404
+
+
+def test_first_sign_in_asks_for_a_username_and_uses_it(app: TestClient) -> None:
+    start = app.post(f"{API}/auth/cloud/email/start", json={"login": "Neha@Example.com"})
+    assert start.status_code == 200
+    assert start.json() == {
+        "email_hint": "n\u2022\u2022\u2022@example.com",
+        "new_account": True,
+        "suggested_username": "neha",
+    }
+
+    user = app.post(
+        f"{API}/auth/cloud/email/verify",
+        json={"login": "neha@example.com", "code": GOOD_CODE, "username": "neha_k"},
+    ).json()
+    assert user["username"] == "neha_k"
+
+
+def test_returning_user_can_sign_in_with_their_username(app: TestClient, fake: FakeSupabase) -> None:
+    first = app.post(f"{API}/auth/cloud/email/start", json={"login": "ravi@example.com"})
+    assert first.json()["new_account"] is True
+    app.post(
+        f"{API}/auth/cloud/email/verify",
+        json={"login": "ravi@example.com", "code": GOOD_CODE, "username": "ravi"},
+    )
+
+    browser = TestClient(app.app)
+    start = browser.post(f"{API}/auth/cloud/email/start", json={"login": "Ravi"})
+    assert start.status_code == 200
+    assert start.json()["new_account"] is False
+    assert fake.codes_sent[-1] == "ravi@example.com"  # the code goes to the account's e-mail
+    signed_in = browser.post(f"{API}/auth/cloud/email/verify", json={"login": "ravi", "code": GOOD_CODE})
+    assert signed_in.status_code == 200
+    assert signed_in.json()["username"] == "ravi"
+
+
+def test_unknown_username_asks_for_the_email_address(app: TestClient, fake: FakeSupabase) -> None:
+    response = app.post(f"{API}/auth/cloud/email/start", json={"login": "nobody"})
+    assert response.status_code == 400
+    assert "Enter your e-mail address" in response.json()["detail"]
+    assert fake.codes_sent == []
+
+
+def test_taken_username_is_refused_before_the_code_is_used(app: TestClient, fake: FakeSupabase) -> None:
+    email_sign_in(app, "first@example.com")  # username "first"
+    browser = TestClient(app.app)
+    browser.post(f"{API}/auth/cloud/email/start", json={"login": "second@example.com"})
+    taken = browser.post(
+        f"{API}/auth/cloud/email/verify",
+        json={"login": "second@example.com", "code": GOOD_CODE, "username": "First"},
+    )
+    assert taken.status_code == 400
+    assert "already taken" in taken.json()["detail"]
+    ok = browser.post(
+        f"{API}/auth/cloud/email/verify",
+        json={"login": "second@example.com", "code": GOOD_CODE, "username": "second_one"},
+    )
+    assert ok.status_code == 200

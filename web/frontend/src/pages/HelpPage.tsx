@@ -36,7 +36,7 @@ const TOPICS: Topic[] = [
     title: "Getting started",
     body: (
       <ol>
-        <li><b>Sign in</b> with <i>Continue with Google</i> or a one-time code sent to your e-mail. Your first sign-in creates your account, with its own private workspace.</li>
+        <li><b>Sign in</b> with a one-time code sent to your e-mail. The first time, you also choose a username, which you can type instead of your e-mail next time. Your account gets its own private workspace.</li>
         <li><b>Create your signing key</b> (Home → Get started). Pick a passphrase you'll remember; it's different from your account password.</li>
         <li><b>Add a folder or file</b>: click <i>Add folder or file</i>, then <i>Browse…</i>, open the folder you want and click <i>Protect this folder</i> (or pick a single file).</li>
         <li><b>Confirm</b> with your signing-key passphrase. FileVow fingerprints, signs and backs up every file.</li>
@@ -175,7 +175,7 @@ const TOPICS: Topic[] = [
     title: "Keeping your account safe",
     body: (
       <ul>
-        <li><b>No password to steal.</b> You sign in with Google or a one-time e-mail code, and stay signed in on this PC for 30 days.</li>
+        <li><b>No password to steal.</b> You sign in with a one-time e-mail code (type your username or e-mail), and stay signed in on this PC for 30 days.</li>
         <li><b>Your signing-key passphrase confirms important actions</b> such as accepting or restoring a file. It never leaves this PC. Five wrong tries lock the account for 15 minutes.</li>
         <li><b>Extra protection:</b> turn on two-step verification in Settings to also require a 6-digit code from an app such as Microsoft Authenticator.</li>
         <li><b>What's stored online:</b> only your e-mail address, sign-in dates and (unless you turn it off in Settings) a daily "used today" marker. <i>Delete my account</i> in Settings removes it all.</li>

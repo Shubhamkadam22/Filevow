@@ -92,7 +92,7 @@ Sign `FileVow.exe` before Inno Setup packs it (or configure `SignTool=` in
   download count for each file (also via the REST API), so no database is needed to
   count downloads.
 - **Accounts: Supabase.** When the build has `SUPABASE_URL` / `SUPABASE_ANON_KEY`
-  (repository variables), people sign in with Google or an e-mail code; Supabase stores
+  (repository variables), people sign in with an e-mail code (then their username); Supabase stores
   the e-mail address, sign-in dates and one activity row per day. Everything about
   files stays in each PC's local database. Builds without those values use local
   username + password accounts (development, server mode).

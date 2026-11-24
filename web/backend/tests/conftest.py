@@ -28,7 +28,8 @@ def rsa_key() -> keys.PrivateKey:
 
 @pytest.fixture
 def ctx(tmp_path: Path) -> Iterator[AppContext]:
-    settings = Settings(home=tmp_path / "filevow-home", database_url=None)
+    # _env_file=None: a developer's .env (e.g. real Supabase settings) must never leak into tests.
+    settings = Settings(_env_file=None, home=tmp_path / "filevow-home", database_url=None)
     app_ctx = AppContext(settings, MemorySecretStore())
     initialize(app_ctx)
     yield app_ctx

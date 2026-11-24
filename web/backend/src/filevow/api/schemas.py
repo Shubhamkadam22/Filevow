@@ -384,12 +384,19 @@ class AuthOptionsOut(BaseModel):
 
 
 class EmailCodeStartIn(BaseModel):
-    email: str = Field(min_length=3, max_length=320)
+    login: str = Field(min_length=3, max_length=320)  # e-mail address, or username on this PC
+
+
+class EmailCodeStartOut(BaseModel):
+    email_hint: str  # masked, e.g. p***@gmail.com
+    new_account: bool  # first sign-in on this computer: ask for a username
+    suggested_username: str | None = None
 
 
 class EmailCodeVerifyIn(BaseModel):
-    email: str = Field(min_length=3, max_length=320)
+    login: str = Field(min_length=3, max_length=320)
     code: str = Field(min_length=4, max_length=12)
+    username: str | None = Field(default=None, max_length=64)  # chosen at first sign-in
 
 
 class CloudPreferencesIn(BaseModel):

@@ -17,7 +17,9 @@ def _free_port() -> int:
 
 
 def test_desktop_settings_listen_on_loopback_only(tmp_path: Path) -> None:
-    settings = desktop.desktop_settings(Settings(home=tmp_path, api_host="0.0.0.0", cookie_secure=True))  # noqa: S104
+    settings = desktop.desktop_settings(
+        Settings(_env_file=None, home=tmp_path, api_host="0.0.0.0", cookie_secure=True)  # noqa: S104
+    )
 
     assert settings.api_host == "127.0.0.1"
     assert settings.cookie_secure is False
@@ -25,7 +27,7 @@ def test_desktop_settings_listen_on_loopback_only(tmp_path: Path) -> None:
 
 
 def test_nothing_is_running_on_a_free_port(tmp_path: Path) -> None:
-    assert desktop.is_running(Settings(home=tmp_path, api_port=_free_port())) is False
+    assert desktop.is_running(Settings(_env_file=None, home=tmp_path, api_port=_free_port())) is False
 
 
 def test_launch_command_starts_the_module_from_source() -> None:

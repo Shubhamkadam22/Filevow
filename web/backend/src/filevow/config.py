@@ -43,12 +43,12 @@ class Settings(BaseSettings):
     allow_registration: bool = True  # anyone who can reach the dashboard may create an account
     browse_roots: list[Path] = Field(default_factory=list)  # empty: all drives and the home folder
 
-    # Cloud sign-in with Supabase (Google and one-time e-mail codes). Both values are public
+    # Cloud sign-in with Supabase (one-time e-mail codes; Google optional). Both values are public
     # by design (the anon key only allows what row-level security permits). When unset,
     # accounts are local username + password, as in development and server mode.
     supabase_url: str | None = None
     supabase_anon_key: str | None = None
-    cloud_google: bool = True
+    cloud_google: bool = False  # "Continue with Google": needs a Google OAuth client in Supabase
     cloud_email: bool = True
 
     api_host: str = "127.0.0.1"

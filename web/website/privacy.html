@@ -48,7 +48,7 @@
           <tr><td>One record per day you use the app: the date, the FileVow version and the Windows version</td><td>Counting active users and knowing which versions are still in use</td><td>Supabase. You can turn this off in Settings.</td></tr>
         </tbody>
       </table>
-      <p>If you choose <b>Continue with Google</b>, Google confirms your identity and shares your name, e-mail address and profile picture with our sign-in provider; FileVow itself only keeps the e-mail address. If you sign in with an <b>e-mail code</b>, the code is sent through our e-mail provider. We never see or store a password: there isn't one.</p>
+      <p>You sign in with a one-time code that our e-mail provider sends to your address. We never see or store a password: there isn't one. The username you choose is stored only on your computer.</p>
 
       <h2>3. What stays on your computer</h2>
       <table>
@@ -58,7 +58,7 @@
           <tr><td>Encrypted backup copies of the files you protect</td><td>To show differences and restore files</td><td>FileVow's vault folder, encrypted with AES-256-GCM</td></tr>
           <tr><td>Your signing key, encrypted with your passphrase</td><td>To seal fingerprints and approvals</td><td>FileVow's keys folder</td></tr>
           <tr><td>Audit log: sign-ins (including the local IP address), checks and decisions with your reasons</td><td>So you can see what happened and prove nothing was tampered with</td><td>FileVow's database</td></tr>
-          <tr><td>A copy of your e-mail address and an encrypted sign-in token</td><td>To keep you signed in on this computer and send the daily marker</td><td>FileVow's database, the token encrypted</td></tr>
+          <tr><td>Your username, a copy of your e-mail address and an encrypted sign-in token</td><td>To keep you signed in on this computer and send the daily marker</td><td>FileVow's database, the token encrypted</td></tr>
         </tbody>
       </table>
       <p>By default this is the <code>%LOCALAPPDATA%\FileVow</code> folder of your Windows account. FileVow's own encryption keys are kept in the Windows Credential Manager. None of this is sent to us.</p>
@@ -66,7 +66,6 @@
       <h2>4. Service providers</h2>
       <ul>
         <li><b>Supabase</b> hosts the account data above on our behalf.</li>
-        <li><b>Google</b>, only if you choose Continue with Google, under Google's own privacy policy.</li>
         <li><b>Our e-mail provider</b> delivers sign-in codes.</li>
         <li><b>Vercel</b> hosts this website; <b>GitHub</b> hosts the installer downloads. Both may keep standard access logs.</li>
       </ul>

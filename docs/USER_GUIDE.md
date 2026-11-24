@@ -21,12 +21,18 @@ FileVow again just shows the window.
 
 ## 2. Sign in
 
-The first screen offers two ways in. Your first sign-in creates your account.
+FileVow has no passwords. You sign in with a one-time code sent to your e-mail.
 
-- **Continue with Google**: pick your Google account in the window that opens.
-- **Send me a code**: type your e-mail address, then the 6-digit code FileVow e-mails you.
+**First time on this computer**
+1. Type your e-mail address and click **Send me a code**.
+2. Type the 6-digit code from the e-mail (check Spam if it doesn't arrive within a minute).
+3. Choose a **username** and click **Create account**.
 
-There's no password to remember. You stay signed in on this computer for 30 days.
+**Next time**
+1. Type your **username** (or your e-mail) and click **Send me a code**.
+2. Type the code from the e-mail. That's it.
+
+You stay signed in on this computer for 30 days.
 
 - Each account has its own **private workspace**: its own folders, signing key, changes,
   alerts, history and audit log. Other accounts on the same computer can't see any of it.
@@ -150,7 +156,7 @@ FileVow **never accepts a change on its own**.
 
 ## 10. Keeping your account safe
 
-- **No password to steal:** you sign in with Google or a one-time e-mail code.
+- **No password to steal:** you sign in with a one-time e-mail code.
 - **Your signing-key passphrase** confirms important actions and never leaves your PC.
   Five wrong tries lock the account for 15 minutes.
 - **Two-step verification** (Settings, optional): also require a 6-digit code from an

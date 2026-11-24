@@ -33,7 +33,7 @@ from typing import Any
 from urllib.parse import urlencode
 
 import httpx
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from filevow.config import Settings
@@ -207,7 +207,59 @@ def _unique_username(session: Session, email: str) -> str:
     return candidate
 
 
-def link_account(session: Session, cloud: CloudSession, vault_key: bytes, *, ip_address: str | None) -> User:
+@dataclass(frozen=True)
+class LoginTarget:
+    """Where to send the code: the e-mail address, and the local account if there is one."""
+
+    email: str
+    account: User | None
+
+
+def resolve_login(session: Session, login: str) -> LoginTarget:
+    """Accept an e-mail address, or the username of an account already on this computer."""
+    value = login.strip()
+    if "@" in value:
+        email = normalize_email(value)
+        account = session.scalar(select(User).where(User.email == email, User.cloud_id.is_not(None)))
+        return LoginTarget(email, account)
+    account = session.scalar(
+        select(User).where(func.lower(User.username) == value.lower(), User.cloud_id.is_not(None))
+    )
+    if account is None or not account.email:
+        raise CloudError(
+            f'There\'s no account called "{value}" on this computer. Enter your e-mail address instead.'
+        )
+    return LoginTarget(account.email, account)
+
+
+def mask_email(email: str) -> str:
+    local, _, domain = email.partition("@")
+    return f"{local[:1]}•••@{domain}"
+
+
+def suggest_username(session: Session, email: str) -> str:
+    return _unique_username(session, email)
+
+
+def check_new_username(session: Session, username: str) -> str:
+    """Validate a username chosen at first sign-in (before the code is used up)."""
+    name = username.strip()
+    if not users.USERNAME_PATTERN.match(name):
+        raise CloudError("Use 3-64 letters, numbers, dots, dashes or underscores for your username")
+    taken = session.scalar(select(User.id).where(func.lower(User.username) == name.lower()))
+    if taken is not None:
+        raise CloudError("That username is already taken on this computer. Pick another one.")
+    return name
+
+
+def link_account(
+    session: Session,
+    cloud: CloudSession,
+    vault_key: bytes,
+    *,
+    ip_address: str | None,
+    username: str | None = None,
+) -> User:
     """Find or create the local account for a Supabase account and record the sign-in."""
     if not cloud.email:
         raise CloudError("Your account has no e-mail address; sign in another way.")
@@ -215,7 +267,7 @@ def link_account(session: Session, cloud: CloudSession, vault_key: bytes, *, ip_
     if user is None:
         first_account = session.scalar(select(User.id).limit(1)) is None
         user = User(
-            username=_unique_username(session, cloud.email),
+            username=username or _unique_username(session, cloud.email),
             password_hash=users.unusable_password_hash(),
             role=Role.ADMIN if first_account else Role.USER,
             cloud_id=cloud.user_id,

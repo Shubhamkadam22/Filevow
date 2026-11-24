@@ -1,11 +1,11 @@
-# Going live: Supabase, Google sign-in, GitHub releases and Vercel
+# Going live: Supabase e-mail sign-in, GitHub releases and Vercel
 
 Follow these steps in order, once. They take about an hour. Where a step says
 **"you"**, it needs your own accounts and sign-ins.
 
 | What | Where it runs | What it's for |
 |---|---|---|
-| Accounts | **Supabase** | Sign-in with Google or an e-mail code; counts your users |
+| Accounts | **Supabase** | Sign-in with an e-mail code (then username); counts your users |
 | Installer | **GitHub Releases** | Built automatically when you push a version tag |
 | Website | **Vercel** | Home, Features, About, Privacy, Download |
 | Files, backups, keys, history | **Each user's PC** | Never uploaded anywhere |
@@ -70,7 +70,11 @@ only sends to your own team's addresses and only a few per hour. In
 Sender name: `FileVow`. Then in **Authentication → Rate Limits**, check the e-mails per
 hour limit suits you (for example 30).
 
-## Step 4: Set up "Continue with Google" (you)
+## Step 4 (optional, skip for now): "Continue with Google"
+
+FileVow ships with Google sign-in **off**; people use e-mail codes and usernames. To add
+Google later, do the steps below and set the repository variable / `.env` value
+`FILEVOW_CLOUD_GOOGLE=true`.
 
 1. Go to **console.cloud.google.com** → create a project called `FileVow`.
 2. **APIs & Services → OAuth consent screen** (shown as **Google Auth Platform**):
@@ -88,10 +92,10 @@ hour limit suits you (for example 30).
 4. In Supabase: **Authentication → Sign In / Providers → Google** → enable, paste the
    Client ID and Client secret → **Save**.
 
-## Step 5: Allow FileVow's sign-in address (you)
+## Step 5 (only with Google): Allow FileVow's sign-in address
 
-The desktop app runs on the user's own computer at `http://127.0.0.1:8443`, and Google
-sign-in returns there. In Supabase **Authentication → URL Configuration**:
+Not needed for e-mail codes. With Google turned on, sign-in returns to the desktop app at
+`http://127.0.0.1:8443`. In Supabase **Authentication → URL Configuration**:
 
 - **Site URL**: `http://127.0.0.1:8443`
 - **Redirect URLs**, add both:
@@ -113,8 +117,9 @@ sign-in returns there. In Supabase **Authentication → URL Configuration**:
    cd C:\Project_1\web\backend; .venv\Scripts\python scripts\run_dev.py
    ```
 
-3. Open `http://127.0.0.1:8443`. The sign-in page now shows **Continue with Google** and
-   **Send me a code**. Try both. The first account becomes the administrator.
+3. Open `http://127.0.0.1:8443`. The sign-in page now asks for your e-mail and shows
+   **Send me a code**. Enter the code, choose a username, and you're in. The first account
+   becomes the administrator. Sign out and sign in again with just your username.
 4. In Supabase, **Authentication → Users** shows your account, and
    **Table Editor → usage_summary** shows `active_today = 1`.
 
@@ -169,7 +174,8 @@ From now on every push to `main` updates the site, and pull requests get preview
 
 1. On the live site click **Download**, run `FileVow-Setup.exe` (choose *More info → Run
    anyway* if SmartScreen warns; see *Code signing* in DEPLOYMENT.md).
-2. Sign in with Google, create the signing key, protect a folder, edit a file, restore it.
+2. Sign in with an e-mail code, choose a username, create the signing key, protect a
+   folder, edit a file, restore it.
 3. Check Supabase: **Authentication → Users** lists the new account.
 
 ## Watching your numbers
@@ -190,6 +196,6 @@ Active users count only people who left *Count me as an active user* on in Setti
 ## Before you announce it
 
 - [ ] Replace `privacy@filevow.app` in the privacy policy with an address you read.
-- [ ] Google consent screen **published**, custom SMTP on, test e-mail code received.
+- [ ] Custom SMTP on, templates show `{{ .Token }}`, test e-mail code received.
 - [ ] Installer code-signed (avoids the SmartScreen warning) — optional but recommended.
 - [ ] Tried the whole flow on a second PC or Windows account.

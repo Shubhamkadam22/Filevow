@@ -115,7 +115,7 @@ export function SettingsPage() {
             <Icon name="user" />
             <div className="txt">
               <b>{user.email}</b>
-              <span>Signs in with Google or an e-mail code · {user.username} ({user.role}) · last sign-in {timeAgo(user.last_login_at)}</span>
+              <span>Signs in with an e-mail code · {user.username} ({user.role}) · last sign-in {timeAgo(user.last_login_at)}</span>
             </div>
           </div>
           <div className="row">

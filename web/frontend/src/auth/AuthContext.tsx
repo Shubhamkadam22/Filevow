@@ -1,15 +1,16 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ApiError, api } from "../api/client";
-import type { Role, User } from "../api/types";
+import type { EmailCodeStart, Role, User } from "../api/types";
 
 interface AuthState {
   user: User | null;
   loading: boolean;
   login: (username: string, password: string, totpCode?: string) => Promise<void>;
   register: (username: string, password: string) => Promise<void>;
-  sendEmailCode: (email: string) => Promise<void>;
-  verifyEmailCode: (email: string, code: string) => Promise<void>;
+  /** Send a sign-in code; `login` is an e-mail address or a username on this PC. */
+  sendEmailCode: (login: string) => Promise<EmailCodeStart>;
+  verifyEmailCode: (login: string, code: string, username?: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   can: (minimum: Role) => boolean;
@@ -52,12 +53,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(await api.post<User>("/auth/register", { username, password }));
   }, []);
 
-  const sendEmailCode = useCallback(async (email: string) => {
-    await api.post("/auth/cloud/email/start", { email });
-  }, []);
+  const sendEmailCode = useCallback(
+    (login: string) => api.post<EmailCodeStart>("/auth/cloud/email/start", { login }),
+    [],
+  );
 
-  const verifyEmailCode = useCallback(async (email: string, code: string) => {
-    setUser(await api.post<User>("/auth/cloud/email/verify", { email, code }));
+  const verifyEmailCode = useCallback(async (login: string, code: string, username?: string) => {
+    setUser(await api.post<User>("/auth/cloud/email/verify", { login, code, username: username || null }));
   }, []);
 
   const logout = useCallback(async () => {

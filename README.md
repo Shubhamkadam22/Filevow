@@ -22,7 +22,7 @@ seconds of a change. Changes are never accepted automatically.
 
 1. Visit the website and click **Download**.
 2. Install FileVow (per user, no administrator rights) and open it from the Start menu.
-3. Sign in with Google or an e-mail code (Supabase): every account gets its own private workspace.
+3. Sign in with a one-time e-mail code (Supabase) and pick a username: every account gets its own private workspace.
 4. Create a signing key, click **Add folder or file → Browse…** and choose what to protect.
 5. FileVow checks within seconds of any change and fully every 15 minutes; you review
    and accept or restore each change.
@@ -58,7 +58,7 @@ Build the installer: `web\packaging\windows\build.ps1` (see [docs/DEPLOYMENT.md]
 - Folder browser (Desktop, Documents, drives), first-run setup guide, in-app Help
 - Windows 11 style dashboard: review workspace, command palette, keyboard shortcuts,
   live updates, light and dark themes
-- Cloud sign-in with Supabase (Google OAuth + PKCE, e-mail codes), daily active-user count,
+- Passwordless sign-in with Supabase e-mail codes (username or e-mail; Google optional), daily active-user count,
   account deletion; files, keys and history never leave the PC
 - Desktop app: single-instance launcher in an Edge app window, start with Windows,
   per-user installer

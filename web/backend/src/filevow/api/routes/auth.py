@@ -128,7 +128,7 @@ def register(
 ) -> User:
     """Create a personal account and sign straight in. The first account becomes the administrator."""
     if ctx.settings.cloud_enabled:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "Create your account with Google or an e-mail code")
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Create your account with an e-mail code")
     ip = client_ip(request)
     try:
         user = users.register(
@@ -213,7 +213,7 @@ def change_password(
     if user.is_cloud:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
-            "You sign in with Google or an e-mail code, so there's no password to change",
+            "You sign in with an e-mail code, so there's no password to change",
         )
     confirm_step_up(session, ctx, user, body)
     try:
